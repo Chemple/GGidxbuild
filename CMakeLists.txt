@@ -21,8 +21,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
-include_directories(${PROJECT_SOURCE_DIR}/third_party/spdlog/include)
 
-add_subdirectory(third_party/spdlog)
+include(FetchContent)
+
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG        v1.15.1
+)
+FetchContent_MakeAvailable(spdlog)
+
 add_subdirectory(src)
 add_subdirectory(tests)
