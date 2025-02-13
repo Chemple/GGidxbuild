@@ -13,7 +13,7 @@ foreach(TEST_SRC ${CPP_TEST_SOURCES})
 
     add_executable(${TEST_NAME} ${TEST_SRC})
 
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main Threads::Threads ${PROJECT_NAME})
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main Threads::Threads ${PROJECT_NAME} spdlog::spdlog)
 
 endforeach()
 
@@ -23,7 +23,7 @@ foreach(TEST_SRC ${CUDA_TEST_SOURCES})
 
     add_executable(${TEST_NAME} ${TEST_SRC})
 
-    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main Threads::Threads ${PROJECT_NAME})
+    target_link_libraries(${TEST_NAME} GTest::GTest GTest::Main Threads::Threads ${PROJECT_NAME} spdlog::spdlog)
 
 endforeach()
 
