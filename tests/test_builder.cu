@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <cstdio>
-#include "Gbuilder.cuh"
+#include "Gbuilder.h"
 
 void __global__ hello_world() {
     printf("hello world!\n");

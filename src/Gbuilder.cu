@@ -1,4 +1,4 @@
 #include <cstdio>
 #include <vector>
-#include "Gbuilder.cuh"
-#include "Ghashet.cuh"
+#include "Gbuilder.h"
+#include "Ghashet.h"
