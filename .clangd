@@ -1,0 +1,8 @@
+CompileFlags:
+  Add:
+    - --no-cuda-version-check
+  Remove:
+    - -forward-unknown-to-host-compiler
+    - --generate-code=arch=compute_80,code=[compute_80,sm_80]
+    - --generate-code=arch=compute_86,code=[compute_86,sm_86]
+    - -Xcompiler=-fPIC
