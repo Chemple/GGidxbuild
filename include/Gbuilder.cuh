@@ -2,7 +2,7 @@
 
 #include "Ghashset.cuh"
 #include <cstdint>
-#include <__clang_cuda_intrinsics.h>
+// #include <__clang_cuda_intrinsics.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 
