@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Ghashset.cuh"
+#include <cassert>
 #include <cstdint>
 // #include <__clang_cuda_intrinsics.h>
 #include <cuda.h>
@@ -12,13 +13,15 @@ namespace Gpu {
 template <uint32_t grid_size, uint32_t block_size, uint32_t query_num,
           uint32_t topk, uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF,
           typename data_type = float, typename id_type = uint32_t>
-__global__ void match_kernel(id_type* gt_ids, id_type* top1_match_graph,
-                             id_type* match_match_graph) {
+__global__ void match_kernel(id_type const* __restrict__ gt_ids,
+                             id_type* __restrict__ top1_match_graph,
+                             id_type* __restrict__ match_match_graph) {
   // NOTE(shiwen): max_in_degree is same as topk.
   static_assert(max_in_degree == topk);
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
 
+  // TODO(shiwen): use shared memory.
   for (auto query_idx = thread_idx; query_idx < query_num;
        query_idx += stride) {
     auto top1_base_id = gt_ids[query_idx * topk + 0];
@@ -62,20 +65,160 @@ __global__ void match_kernel(id_type* gt_ids, id_type* top1_match_graph,
   }
 }
 
+// each warp is assigned to calculate all the distance between base_vector_id
+// and its neighbor.
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
-          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF,
-          bool is_strict = false, typename data_type = float,
+          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+          uint32_t shared_memory_size, typename data_type = float,
           typename id_type = uint32_t>
-__global__ void rng_prune_kernel(data_type* base_data, id_type* graph,
-                                 id_type* pruned_graph) {
+__global__ void compute_ip_distance_kernel(
+    data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
+    data_type* __restrict__ neighbor_distance) {
+  constexpr auto lane_width = 32;
+  constexpr auto warp_per_block = block_size / lane_width;
+  // each warp need to store the base vector and the neighbor vector to
+  // calculate the distance between them.
+  constexpr auto shared_memory_size_per_warp = dim * sizeof(data_type) * 2;
+  constexpr auto global_warp_num = block_size * grid_size / lane_width;
+  // NOTE(shiwen): check the allocation of shared memory is correct.
+  static_assert(shared_memory_size ==
+                shared_memory_size_per_warp * warp_per_block);
+
+  // NOTE(shiwen): use offset instead of bytes address.
+  extern __shared__ data_type sdata[];
+
+  auto const global_warp_id =
+      (threadIdx.x + blockDim.x * blockIdx.x) / lane_width;
+  auto const local_warp_id = threadIdx.x / lane_width;
+  auto const lane_id = threadIdx.x % lane_width;
+  auto const base_vector_offset =
+      local_warp_id * shared_memory_size_per_warp / sizeof(data_type);
+  auto const neighbor_vector_offset = base_vector_offset + dim;
+
+  for (auto base_vector_id = global_warp_id; base_vector_id < base_num;
+       base_vector_id += global_warp_num) {
+    for (auto i = lane_id; i < dim; i += lane_width) {
+      sdata[base_vector_offset + i] = base_data[base_vector_id * dim + i];
+    }
+
+    // NOTE(shiwen): in case of dim % 32 != 0
+    // TODO(shiwen): need this primitive?
+    __syncwarp();
+
+    for (auto neighbor_idx = 0; neighbor_idx < max_in_degree; neighbor_idx++) {
+      auto neighbor_base_id =
+          graph[base_vector_id * max_in_degree + neighbor_idx];
+      if (neighbor_base_id == tomb) {
+        break;
+      }
+      for (auto i = lane_id; i < dim; i += lane_width) {
+        sdata[neighbor_vector_offset + i] =
+            base_data[neighbor_base_id * dim + i];
+      }
+
+      // NOTE(shiwen): in case of dim % 32 != 0
+      // TODO(shiwen): need this primitive?
+      __syncwarp();
+
+      data_type sum = 0;
+      for (auto i = lane_id; i < dim; i += lane_width) {
+        sum +=
+            sdata[base_vector_offset + i] * sdata[neighbor_vector_offset + i];
+      }
+      // warp level reduce.
+      for (auto offset = 16; offset > 0; offset >>= 1) {
+        sum += __shfl_down_sync(0xffffffff, sum, offset);
+      }
+      if (lane_id == 0) {
+        neighbor_distance[base_vector_id * max_in_degree + neighbor_idx] = -sum;
+      }
+
+      // NOTE(shiwen): in case of dim % 32 != 0
+      // TODO(shiwen): need this primitive?
+      __syncwarp();
+    }
+  }
+}
+
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t graph_max_in_degree, uint32_t pruned_graph_max_in_degree,
+          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = false,
+          typename data_type = float, typename id_type = uint32_t>
+__global__ void rng_prune_kernel(
+    __restrict__ data_type const* base_data, id_type const* __restrict__ graph,
+    data_type const* __restrict__ neighbor_distance,
+    id_type* __restrict__ pruned_graph) {
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
 
-  for (auto base_idx = thread_idx; base_idx < base_num; base_idx += stride) {
-    // insert base id of the first neibour first.
-    auto neibour_idx = 0;
-    auto neibour_base_id = graph[base_idx * max_in_degree + 0];
-    pruned_graph[base_idx * max_in_degree + 0] = neibour_base_id;
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    // TODO(shiwen): use another kernel to do this distance computing job? ->
+    // maybe we can use tensor core?
+    // TODO(shiwen): is it necessary to compute the distance of all the
+    // neighbor of base? calculate the distance between base_id and its
+    // neighbors.
+    {
+      for (auto neighbor_idx = 0; neighbor_idx < graph_max_in_degree;
+           neighbor_idx++) {
+        auto neighbor_base_id =
+            graph[base_id * graph_max_in_degree + neighbor_idx];
+        if (neighbor_base_id == tomb) {
+          break;
+        }
+        assert(neighbor_base_id < base_num);
+        // TODO(shiwen): FP16?
+        data_type distance = 0;
+        for (auto i = 0; i < dim; i++) {
+          auto x_value = base_data[neighbor_base_id * dim + i];
+          // TODO(shiwen): use shared memory.
+          auto y_value = base_data[base_id * dim + i];
+          distance += x_value * y_value;
+        }
+        neighbor_distance[base_id * graph_max_in_degree + neighbor_idx] =
+            -distance;
+      }
+    }
+    // insert base id of the first neighbor first.
+    auto neighbor_idx = 0;
+    auto neighbor_base_id = graph[base_id * graph_max_in_degree + 0];
+    pruned_graph[base_id * pruned_graph_max_in_degree + 0] = neighbor_base_id;
+    auto pruned_graph_neighbor_idx = 0;
+    neighbor_idx++;
+    for (; neighbor_idx < graph_max_in_degree; neighbor_idx++) {
+      neighbor_base_id = graph[base_id * graph_max_in_degree + neighbor_idx];
+      if (neighbor_base_id == tomb) {
+        break;
+      }
+      auto compare_idx = 0;
+      for (; compare_idx <= pruned_graph_neighbor_idx; compare_idx++) {
+        auto compare_base_id =
+            pruned_graph[base_id * pruned_graph_max_in_degree + compare_idx];
+        assert(compare_base_id != tomb);
+        // TODO(shiwen): FP16?
+        data_type distance = 0;
+        for (auto i = 0; i < dim; i++) {
+          auto x_value = base_data[neighbor_base_id * dim + i];
+          // TODO(shiwen): use shared memory.
+          auto y_value = base_data[compare_base_id * dim + i];
+          distance += x_value * y_value;
+        }
+        distance = -distance;
+        if (distance < neighbor_distance[base_id * graph_max_in_degree +
+                                         neighbor_base_id]) {
+          break;
+        }
+      }
+      // pass all the distance tests.
+      if (compare_idx > pruned_graph_neighbor_idx) {
+        pruned_graph_neighbor_idx++;
+        assert(pruned_graph_neighbor_idx < max_in_degree);
+        // NOTE(shiwen): xxxxxxxxxxxxxxxx
+        assert(base_id != neighbor_base_id);
+        pruned_graph[base_id * pruned_graph_max_in_degree +
+                     pruned_graph_neighbor_idx] = neighbor_base_id;
+      }
+    }
+    // TODO(shiwen): slight RNG prune?
   }
 }
 
