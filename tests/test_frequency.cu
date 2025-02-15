@@ -144,43 +144,26 @@ void generateTestData(int* data, size_t size) {
     for(size_t i = 0; i < size; i++) {
         data[i] = dis(gen);
     }
-    
-    // 确保有一个明确的最频繁元素
-    size_t frequent_count = size / 4;
-    int frequent_value = dis(gen);
-    #pragma omp parallel for
-    for(size_t i = 0; i < frequent_count; i++) {
-        data[i] = frequent_value;
-    }
 }
 
 // CPU验证
 int findMostFrequentCPU(const int* matrix, size_t size) {
-    std::unordered_map<int, size_t> freq;
+    std::vector<int> frequency, order;
+    frequency.resize(size);
+    order.resize(size);
     #pragma omp parallel
     {
-        std::unordered_map<int, size_t> local_freq;
-        #pragma omp for nowait
         for(size_t i = 0; i < size; i++) {
-            local_freq[matrix[i]]++;
-        }
-        
-        #pragma omp critical
-        {
-            for(const auto& pair : local_freq) {
-                freq[pair.first] += pair.second;
-            }
+            frequency[matrix[i]]++;
         }
     }
-    
+
+    std::iota(order.begin(), order.end(), 0);
+    std::sort(order.begin(), order.end(), [&](uint32_t i, uint32_t j) {
+        return frequency[i] > frequency[j];  // < small begin
+    });
     size_t maxFreq = 0;
-    int result = -1;
-    for(const auto& pair : freq) {
-        if(pair.second > maxFreq) {
-            maxFreq = pair.second;
-            result = pair.first;
-        }
-    }
+    int result = order[0];
     return result;
 }
 
