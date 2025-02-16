@@ -72,72 +72,92 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t shared_memory_size, typename data_type = float,
           typename id_type = uint32_t>
 __global__ void compute_ip_distance_kernel(
-    data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
+    data_type const* __restrict__ base_data, 
+    id_type const* __restrict__ graph,
     data_type* __restrict__ neighbor_distance) {
-  constexpr auto lane_width = 32;
-  constexpr auto warp_per_block = block_size / lane_width;
-  // each warp need to store the base vector and the neighbor vector to
-  // calculate the distance between them.
-  constexpr auto shared_memory_size_per_warp = dim * sizeof(data_type) * 2;
-  constexpr auto global_warp_num = block_size * grid_size / lane_width;
-  // NOTE(shiwen): check the allocation of shared memory is correct.
-  static_assert(shared_memory_size ==
-                shared_memory_size_per_warp * warp_per_block);
+    
+    constexpr auto lane_width = 32;
+    constexpr auto warp_per_block = block_size / lane_width;
+    // each warp need to store the base vector and the neighbor vector to
+    // calculate the distance between them.
+    constexpr auto shared_memory_size_per_warp = dim * sizeof(data_type) * 2;
+    constexpr auto global_warp_num = block_size * grid_size / lane_width;
+    
+    // NOTE(shiwen): check the allocation of shared memory is correct.
+    static_assert(shared_memory_size == shared_memory_size_per_warp * warp_per_block);
 
-  // NOTE(shiwen): use offset instead of bytes address.
-  extern __shared__ data_type sdata[];
+    // NOTE(shiwen): use offset instead of bytes address.
+    extern __shared__ data_type sdata[];
 
-  auto const global_warp_id =
-      (threadIdx.x + blockDim.x * blockIdx.x) / lane_width;
-  auto const local_warp_id = threadIdx.x / lane_width;
-  auto const lane_id = threadIdx.x % lane_width;
-  auto const base_vector_offset =
-      local_warp_id * shared_memory_size_per_warp / sizeof(data_type);
-  auto const neighbor_vector_offset = base_vector_offset + dim;
+    auto const global_warp_id = (threadIdx.x + blockDim.x * blockIdx.x) / lane_width;
+    auto const local_warp_id = threadIdx.x / lane_width;
+    auto const lane_id = threadIdx.x % lane_width;
+    auto const base_vector_offset = local_warp_id * shared_memory_size_per_warp / sizeof(data_type);
+    auto const neighbor_vector_offset = base_vector_offset + dim;
 
-  for (auto base_vector_id = global_warp_id; base_vector_id < base_num;
-       base_vector_id += global_warp_num) {
-    for (auto i = lane_id; i < dim; i += lane_width) {
-      sdata[base_vector_offset + i] = base_data[base_vector_id * dim + i];
+    // 处理每个基向量
+    for (auto base_vector_id = global_warp_id; base_vector_id < base_num;
+         base_vector_id += global_warp_num) {
+        
+        // 加载基向量到shared memory
+        #pragma unroll 4
+        for (auto i = lane_id; i < dim; i += lane_width) {
+            sdata[base_vector_offset + i] = base_data[base_vector_id * dim + i];
+        }
+        __syncwarp();
+
+        // 处理每个邻居
+        for (auto neighbor_idx = 0; neighbor_idx < max_in_degree; neighbor_idx++) {
+            auto neighbor_base_id = graph[base_vector_id * max_in_degree + neighbor_idx];
+            if (neighbor_base_id == tomb) {
+                break;
+            }
+
+            // 加载邻居向量到shared memory
+            #pragma unroll 4
+            for (auto i = lane_id; i < dim; i += lane_width) {
+                sdata[neighbor_vector_offset + i] = base_data[neighbor_base_id * dim + i];
+            }
+            __syncwarp();
+
+            // 计算内积
+            data_type sum = 0;
+            data_type c = 0;  // Kahan求和的修正项
+
+            // 主循环：计算内积
+            #pragma unroll 4
+            for (auto i = lane_id; i < dim; i += lane_width) {
+                data_type base_val = sdata[base_vector_offset + i];
+                data_type neighbor_val = sdata[neighbor_vector_offset + i];
+                data_type prod = base_val * neighbor_val;
+                
+                // Kahan求和
+                data_type y = prod - c;
+                data_type t = sum + y;
+                c = (t - sum) - y;
+                sum = t;
+            }
+
+            // warp级别归约
+            #pragma unroll
+            for (auto offset = lane_width/2; offset > 0; offset >>= 1) {
+                data_type other_sum = __shfl_down_sync(0xffffffff, sum, offset);
+                if (lane_id < offset) {
+                    // 继续使用Kahan求和进行归约
+                    data_type y = other_sum - c;
+                    data_type t = sum + y;
+                    c = (t - sum) - y;
+                    sum = t;
+                }
+            }
+
+            // 存储结果
+            if (lane_id == 0) {
+                neighbor_distance[base_vector_id * max_in_degree + neighbor_idx] = -sum;
+            }
+            __syncwarp();
+        }
     }
-
-    // NOTE(shiwen): in case of dim % 32 != 0
-    // TODO(shiwen): need this primitive?
-    __syncwarp();
-
-    for (auto neighbor_idx = 0; neighbor_idx < max_in_degree; neighbor_idx++) {
-      auto neighbor_base_id =
-          graph[base_vector_id * max_in_degree + neighbor_idx];
-      if (neighbor_base_id == tomb) {
-        break;
-      }
-      for (auto i = lane_id; i < dim; i += lane_width) {
-        sdata[neighbor_vector_offset + i] =
-            base_data[neighbor_base_id * dim + i];
-      }
-
-      // NOTE(shiwen): in case of dim % 32 != 0
-      // TODO(shiwen): need this primitive?
-      __syncwarp();
-
-      data_type sum = 0;
-      for (auto i = lane_id; i < dim; i += lane_width) {
-        sum +=
-            sdata[base_vector_offset + i] * sdata[neighbor_vector_offset + i];
-      }
-      // warp level reduce.
-      for (auto offset = 16; offset > 0; offset >>= 1) {
-        sum += __shfl_down_sync(0xffffffff, sum, offset);
-      }
-      if (lane_id == 0) {
-        neighbor_distance[base_vector_id * max_in_degree + neighbor_idx] = -sum;
-      }
-
-      // NOTE(shiwen): in case of dim % 32 != 0
-      // TODO(shiwen): need this primitive?
-      __syncwarp();
-    }
-  }
 }
 
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
