@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 #include <cuda_runtime.h>
+#include <omp.h>
 
 namespace Gbuilder {
 namespace Gpu {
@@ -16,6 +17,8 @@ void cpu_rng_prune(data_type const* base_data, id_type const* graph,
                    uint32_t graph_max_in_degree,
                    uint32_t pruned_graph_max_in_degree,
                    id_type tomb = 0xFFFFFFFF) {
+  omp_set_num_threads(64);
+#pragma omp parallel for
   for (uint32_t base_id = 0; base_id < base_num; ++base_id) {
     std::vector<id_type> pruned_neighbors;
     id_type const* neighbors = &graph[base_id * graph_max_in_degree];
@@ -36,7 +39,7 @@ void cpu_rng_prune(data_type const* base_data, id_type const* graph,
       id_type curr_neighbor = neighbors[neighbor_idx];
       if (curr_neighbor == tomb) break;
 
-      bool keep = true;
+      bool keep = false;
       for (id_type existing : pruned_neighbors) {
         // 计算curr_neighbor与existing的内积距离
         data_type ip = 0;
@@ -47,13 +50,13 @@ void cpu_rng_prune(data_type const* base_data, id_type const* graph,
         data_type curr_dist = -ip;
 
         // 检查是否满足RNG条件
-        if (curr_dist >= distances[neighbor_idx]) {
-          keep = false;
+        if (curr_dist < distances[neighbor_idx]) {
+          keep = true;
           break;
         }
       }
 
-      if (keep) {
+      if (!keep) {
         pruned_neighbors.push_back(curr_neighbor);
         if (pruned_neighbors.size() >= pruned_graph_max_in_degree) break;
       }
@@ -89,15 +92,19 @@ class RNGPruneTest : public ::testing::Test {
     // 生成随机base数据
     for (auto& v : host_base_data) v = dist(gen);
 
+    SPDLOG_INFO("begin gen the graph");
     // 生成随机图结构（填充有效邻居）
     std::uniform_int_distribution<uint32_t> id_dist(0, base_num - 1);
+    omp_set_num_threads(64);
+
+#pragma omp parallel for
     for (uint32_t i = 0; i < base_num; ++i) {
       auto set = std::set<uint32_t>{};
       set.insert(i);
       for (uint32_t j = 0; j < graph_max_in_degree; ++j) {
         auto select = id_dist(gen);
         while (set.find(select) != set.end()) {
-          select = id_dist(gen);
+          select = (select + 1) % base_num;
           // SPDLOG_INFO("the select is {}, i is {}", select, i);
         }
         set.insert(select);
@@ -112,10 +119,10 @@ class RNGPruneTest : public ::testing::Test {
   using id_type = uint32_t;
 
   // 测试参数
-  static constexpr uint32_t base_num = 64;
+  static constexpr uint32_t base_num = 10 * 1024 * 1024;
   static constexpr uint32_t dim = 128;
-  static constexpr uint32_t graph_max_in_degree = 32;
-  static constexpr uint32_t pruned_max_in_degree = 16;
+  static constexpr uint32_t graph_max_in_degree = 128;
+  static constexpr uint32_t pruned_max_in_degree = 32;
   static constexpr uint32_t tomb = 0XFFFFFFFF;
   static constexpr uint32_t grid_size = 72;
   static constexpr uint32_t block_size = 256;
@@ -195,6 +202,10 @@ TEST_F(RNGPruneTest, BasicPrune) {
              base_num * graph_max_in_degree * sizeof(float),
              cudaMemcpyDeviceToHost);
 
+  cudaMemcpy(host_graph.data(), d_graph,
+             base_num * graph_max_in_degree * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+
   error = cudaGetLastError();
   if (error != cudaSuccess) {
     printf("CUDA Error: %s\n", cudaGetErrorString(error));
@@ -211,25 +222,25 @@ TEST_F(RNGPruneTest, BasicPrune) {
 
   SPDLOG_INFO("finish computing in host");
 
-  // // 比较结果
-  // for (uint32_t i = 0; i < base_num; ++i) {
-  //   for (uint32_t j = 0; j < pruned_max_in_degree; ++j) {
-  //     uint32_t gpu_val = host_pruned_gpu[i * pruned_max_in_degree + j];
-  //     uint32_t cpu_val = host_pruned_cpu[i * pruned_max_in_degree + j];
+  // 比较结果
+  for (uint32_t i = 0; i < base_num; ++i) {
+    for (uint32_t j = 0; j < pruned_max_in_degree; ++j) {
+      uint32_t gpu_val = host_pruned_gpu[i * pruned_max_in_degree + j];
+      uint32_t cpu_val = host_pruned_cpu[i * pruned_max_in_degree + j];
 
-  //     // 验证有效邻居是否一致
-  //     if (gpu_val != 0xFFFFFFFF) {
-  //       EXPECT_EQ(gpu_val, cpu_val)
-  //           << "Mismatch at base " << i << ", neighbor " << j;
-  //     }
-  //   }
-  // }
+      // 验证有效邻居是否一致
+      if (gpu_val != 0xFFFFFFFF) {
+        EXPECT_EQ(gpu_val, cpu_val)
+            << "Mismatch at base " << i << ", neighbor " << j;
+      }
+    }
+  }
 
-  // // 释放设备内存
-  // cudaFree(d_base_data);
-  // cudaFree(d_graph);
-  // cudaFree(d_pruned);
-  // cudaFree(d_neighbor_dist);
+  // 释放设备内存
+  cudaFree(d_base_data);
+  cudaFree(d_graph);
+  cudaFree(d_pruned);
+  cudaFree(d_neighbor_dist);
 }
 
 }  // namespace Gpu

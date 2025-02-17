@@ -238,8 +238,8 @@ __global__ void compute_and_sort_ip_distance_kernel(
     // FIXME(shiwen): check the 3rd template.
     // FIXME(shiwen): check the 3rd template.
     // FIXME(shiwen): check the 3rd template.
-    warp_sort<data_type, id_type, 16, lane_width>(distance_sdata,
-                                                  neighbor_id_sdata, true);
+    warp_sort<data_type, id_type, max_in_degree / 2, lane_width>(
+        distance_sdata, neighbor_id_sdata, true);
 
     __syncwarp();
 
@@ -259,7 +259,7 @@ __global__ void compute_and_sort_ip_distance_kernel(
 
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t graph_max_in_degree, uint32_t pruned_graph_max_in_degree,
-          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = false,
+          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = true,
           typename data_type = float, typename id_type = uint32_t>
 __global__ void rng_prune_kernel(
     data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
@@ -272,34 +272,43 @@ __global__ void rng_prune_kernel(
     // insert base id of the first neighbor first.
     auto neighbor_idx = 0;
     auto pruned_graph_neighbor_idx = 0;
+    assert(neighbor_idx < graph_max_in_degree);
     auto neighbor_base_id = graph[base_id * graph_max_in_degree + neighbor_idx];
     if (neighbor_base_id == tomb) {
-      break;
+      continue;
     }
+    assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
     pruned_graph[base_id * pruned_graph_max_in_degree +
                  pruned_graph_neighbor_idx] = neighbor_base_id;
     neighbor_idx++;
-    for (; neighbor_idx < graph_max_in_degree; neighbor_idx++) {
+    auto explore_flag = true;
+    for (; (explore_flag && neighbor_idx < graph_max_in_degree);
+         neighbor_idx++) {
+      assert(neighbor_idx < graph_max_in_degree);
       neighbor_base_id = graph[base_id * graph_max_in_degree + neighbor_idx];
       if (neighbor_base_id == tomb) {
         break;
       }
       auto compare_idx = 0;
       for (; compare_idx <= pruned_graph_neighbor_idx; compare_idx++) {
+        assert(compare_idx < pruned_graph_max_in_degree);
         auto compare_base_id =
             pruned_graph[base_id * pruned_graph_max_in_degree + compare_idx];
         assert(compare_base_id != tomb);
         // TODO(shiwen): FP16?
         data_type distance = 0;
         for (auto i = 0; i < dim; i++) {
+          assert(i < dim);
           auto x_value = base_data[neighbor_base_id * dim + i];
           // TODO(shiwen): use shared memory.
+          assert(i < dim);
           auto y_value = base_data[compare_base_id * dim + i];
           distance += x_value * y_value;
         }
         distance = -distance;
-        if (distance < neighbor_distance[base_id * graph_max_in_degree +
-                                         neighbor_base_id]) {
+        assert(neighbor_idx < graph_max_in_degree);
+        if (distance <
+            neighbor_distance[base_id * graph_max_in_degree + neighbor_idx]) {
           break;
         }
       }
@@ -307,13 +316,15 @@ __global__ void rng_prune_kernel(
       if (compare_idx > pruned_graph_neighbor_idx) {
         pruned_graph_neighbor_idx++;
         // NOTE(shiwen):
-        if (pruned_graph_neighbor_idx == pruned_graph_max_in_degree) {
-          break;
-        }
         assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
         assert(base_id != neighbor_base_id);
+        assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
         pruned_graph[base_id * pruned_graph_max_in_degree +
                      pruned_graph_neighbor_idx] = neighbor_base_id;
+        if (pruned_graph_neighbor_idx == pruned_graph_max_in_degree - 1) {
+          explore_flag = false;
+          break;
+        }
       }
     }
     // TODO(shiwen): slight RNG prune?
