@@ -1,10 +1,14 @@
 #pragma once
 
+#include "GBitonicSort.cuh"
 #include "Ghashset.cuh"
+#include <algorithm>
 #include <cassert>
+#include <cfloat>
 #include <cstdint>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <unistd.h>
 
 namespace Gbuilder {
 namespace Gpu {
@@ -136,6 +140,112 @@ __global__ void compute_ip_distance_kernel(
       // TODO(shiwen): need this primitive?
       __syncwarp();
     }
+  }
+}
+
+// FIXME(shiwen): too much __syncwarp()!!!
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+          uint32_t shared_memory_size, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void compute_and_sort_ip_distance_kernel(
+    data_type const* __restrict__ base_data, id_type* __restrict__ graph,
+    data_type* __restrict__ neighbor_distance) {
+  constexpr uint32_t lane_width = 32;
+  constexpr uint32_t warp_per_block = block_size / lane_width;
+  constexpr uint32_t shared_memory_size_per_warp =
+      dim * sizeof(data_type) * 2 +
+      max_in_degree * (sizeof(data_type) + sizeof(id_type));
+  constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
+
+  static_assert(shared_memory_size ==
+                shared_memory_size_per_warp * warp_per_block);
+
+  extern __shared__ __align__(sizeof(data_type)) uint8_t shared_memory[];
+
+  uint32_t const global_warp_id =
+      (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
+  uint32_t const local_warp_id = threadIdx.x / lane_width;
+  uint32_t const lane_id = threadIdx.x % lane_width;
+
+  // Shared memory layout per warp
+  data_type* base_vector = reinterpret_cast<data_type*>(
+      &shared_memory[local_warp_id *
+                     (dim * sizeof(data_type) * 2 +
+                      max_in_degree * (sizeof(data_type) + sizeof(id_type)))]);
+  data_type* neighbor_vector = base_vector + dim;
+  data_type* distance_sdata = neighbor_vector + dim;
+  id_type* neighbor_id_sdata =
+      reinterpret_cast<id_type*>(distance_sdata + max_in_degree);
+
+  for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
+       base_vector_id += global_warp_num) {
+    // Load base vector
+    for (uint32_t i = lane_id; i < dim; i += lane_width) {
+      base_vector[i] = base_data[base_vector_id * dim + i];
+    }
+    __syncwarp();
+
+    uint32_t min_invalid_neighbor_idx = max_in_degree - 1;
+    // Process neighbors and collect distances
+    for (uint32_t neighbor_idx = 0; neighbor_idx < max_in_degree;
+         ++neighbor_idx) {
+      id_type const neighbor_id =
+          graph[base_vector_id * max_in_degree + neighbor_idx];
+      if (neighbor_id == tomb) {
+        min_invalid_neighbor_idx = neighbor_idx;
+        // NOTE(shiwen): set all distance of tomb id to FLT_MAX
+        if (lane_id == 0) {
+          for (uint32_t neighbor_idx = min_invalid_neighbor_idx;
+               neighbor_idx < max_in_degree; neighbor_idx++) {
+            distance_sdata[neighbor_idx] = FLT_MAX;
+          }
+        }
+        __syncwarp();
+        break;
+      }
+
+      // Load neighbor vector
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        neighbor_vector[i] = base_data[neighbor_id * dim + i];
+      }
+      __syncwarp();
+
+      data_type sum = 0;
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        sum += base_vector[i] * neighbor_vector[i];
+      }
+      for (int offset = 16; offset > 0; offset >>= 1) {
+        sum += __shfl_down_sync(0xffffffff, sum, offset);
+      }
+      __syncwarp();
+
+      if (lane_id == 0) {
+        distance_sdata[neighbor_idx] = -sum;
+        neighbor_id_sdata[neighbor_idx] = neighbor_id;
+      }
+      __syncwarp();
+    }
+
+    __syncwarp();
+
+    // FIXME(shiwen): check the 3rd template.
+    warp_sort<data_type, id_type, 32, lane_width>(distance_sdata,
+                                                  neighbor_id_sdata, true);
+
+    __syncwarp();
+
+    for (uint32_t i = lane_id; i < max_in_degree; i += lane_width) {
+      if (i < min_invalid_neighbor_idx) {
+        neighbor_distance[base_vector_id * max_in_degree + i] =
+            distance_sdata[i];
+        graph[base_vector_id * max_in_degree + i] = neighbor_id_sdata[i];
+      } else if (i >= min_invalid_neighbor_idx) {
+        neighbor_distance[base_vector_id * max_in_degree + i] = FLT_MAX;
+        graph[base_vector_id * max_in_degree + i] = tomb;
+      }
+    }
+    __syncwarp();
   }
 }
 
