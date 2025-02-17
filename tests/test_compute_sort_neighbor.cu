@@ -130,21 +130,21 @@ class IPDistanceTest : public ::testing::Test {
       val = dist(gen);
     }
 
-    initial_graph.resize(base_num * max_in_degree);
+    initial_graph.resize(base_num * graph_max_in_degree);
     std::uniform_int_distribution<uint32_t> id_dist(
         0, base_num - 2);  // 避免自连接
 
     for (uint32_t i = 0; i < base_num; ++i) {
       // 前50%为有效邻居，后50%为tomb
-      uint32_t valid_count = max_in_degree / 2;
-      for (uint32_t j = 0; j < max_in_degree; ++j) {
+      uint32_t valid_count = graph_max_in_degree / 2;
+      for (uint32_t j = 0; j < graph_max_in_degree; ++j) {
         if (j < valid_count) {
           // 生成不等于当前节点i的ID
           uint32_t neighbor_id = id_dist(gen);
           neighbor_id += (neighbor_id >= i);  // 跳过当前节点
-          initial_graph[i * max_in_degree + j] = neighbor_id;
+          initial_graph[i * graph_max_in_degree + j] = neighbor_id;
         } else {
-          initial_graph[i * max_in_degree + j] = tomb;
+          initial_graph[i * graph_max_in_degree + j] = tomb;
         }
       }
     }
@@ -152,7 +152,8 @@ class IPDistanceTest : public ::testing::Test {
     // 分配设备内存
     cudaMalloc(&d_base_data, base_data.size() * sizeof(float));
     cudaMalloc(&d_graph, initial_graph.size() * sizeof(uint32_t));
-    cudaMalloc(&d_neighbor_distance, base_num * max_in_degree * sizeof(float));
+    cudaMalloc(&d_neighbor_distance,
+               base_num * graph_max_in_degree * sizeof(float));
 
     // 拷贝数据到设备
     cudaMemcpy(d_base_data, base_data.data(), base_data.size() * sizeof(float),
@@ -169,18 +170,18 @@ class IPDistanceTest : public ::testing::Test {
   }
 
   // 公共测试参数
-  static constexpr uint32_t grid_size = 72;
-  static constexpr uint32_t block_size = 512;
-  static constexpr uint32_t base_num = 10 * 1024 * 1024;
-  static constexpr uint32_t max_in_degree = 64;
-  static constexpr uint32_t tomb = 0xFFFFFFFF;
+  static constexpr uint32_t base_num = 64;
   static constexpr uint32_t dim = 128;
+  static constexpr uint32_t graph_max_in_degree = 32;
+  static constexpr uint32_t pruned_max_in_degree = 16;
+  static constexpr uint32_t tomb = 0XFFFFFFFF;
+  static constexpr uint32_t grid_size = 72;
+  static constexpr uint32_t block_size = 256;
 
-  // 计算共享内存大小
   static constexpr uint32_t shared_memory_size =
       (dim * sizeof(float) * 2 +
-       max_in_degree * (sizeof(float) + sizeof(uint32_t))) *
-      (block_size / 32);
+       graph_max_in_degree * (sizeof(uint32_t) + sizeof(float))) *
+      block_size / 32;
 
   // 测试数据
   std::vector<float> base_data{};
@@ -199,7 +200,7 @@ TEST_F(IPDistanceTest, BasicFunctionality) {
 
   // 启动内核
   compute_and_sort_ip_distance_kernel<grid_size, block_size, base_num,
-                                      max_in_degree, tomb, dim,
+                                      graph_max_in_degree, tomb, dim,
                                       shared_memory_size>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_graph,
                                                       d_neighbor_distance);
@@ -215,25 +216,26 @@ TEST_F(IPDistanceTest, BasicFunctionality) {
 
   // 拷贝结果回主机
   std::vector<uint32_t> gpu_graph(initial_graph.size());
-  std::vector<float> gpu_dist(base_num * max_in_degree);
+  std::vector<float> gpu_dist(base_num * graph_max_in_degree);
   cudaMemcpy(gpu_graph.data(), d_graph, initial_graph.size() * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
   cudaMemcpy(gpu_dist.data(), d_neighbor_distance,
-             base_num * max_in_degree * sizeof(float), cudaMemcpyDeviceToHost);
+             base_num * graph_max_in_degree * sizeof(float),
+             cudaMemcpyDeviceToHost);
 
   SPDLOG_INFO("finish gpu data transfering");
 
   // 计算CPU结果
   std::vector<uint32_t> cpu_graph = initial_graph;
-  std::vector<float> cpu_dist(base_num * max_in_degree);
+  std::vector<float> cpu_dist(base_num * graph_max_in_degree);
   parallel_compute_and_sort_ip_distance_cpu(base_data.data(), cpu_graph.data(),
                                             cpu_dist.data(), base_num, dim,
-                                            max_in_degree, tomb);
+                                            graph_max_in_degree, tomb);
 
   SPDLOG_INFO("finish cpu data computation");
 
   compare_id_and_distance(gpu_graph.data(), cpu_graph.data(), gpu_dist.data(),
-                          cpu_dist.data(), base_num * max_in_degree);
+                          cpu_dist.data(), base_num * graph_max_in_degree);
 
   // // 验证结果
   // compare_uint32_arrays(gpu_graph.data(), cpu_graph.data(),
@@ -250,22 +252,23 @@ TEST_F(IPDistanceTest, AllTombstoneCase) {
 
   // 启动内核
   compute_and_sort_ip_distance_kernel<grid_size, block_size, base_num,
-                                      max_in_degree, tomb, dim,
+                                      graph_max_in_degree, tomb, dim,
                                       shared_memory_size>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_graph,
                                                       d_neighbor_distance);
 
   // 获取GPU结果
   std::vector<uint32_t> gpu_graph(initial_graph.size());
-  std::vector<float> gpu_dist(base_num * max_in_degree);
+  std::vector<float> gpu_dist(base_num * graph_max_in_degree);
   cudaMemcpy(gpu_graph.data(), d_graph, initial_graph.size() * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
   cudaMemcpy(gpu_dist.data(), d_neighbor_distance,
-             base_num * max_in_degree * sizeof(float), cudaMemcpyDeviceToHost);
+             base_num * graph_max_in_degree * sizeof(float),
+             cudaMemcpyDeviceToHost);
 
   // 预期结果：所有位置都是tomb和0
   std::vector<uint32_t> expected_graph(initial_graph.size(), tomb);
-  std::vector<float> expected_dist(base_num * max_in_degree, FLT_MAX);
+  std::vector<float> expected_dist(base_num * graph_max_in_degree, FLT_MAX);
 
   ASSERT_EQ(gpu_graph, expected_graph);
   ASSERT_EQ(gpu_dist, expected_dist);

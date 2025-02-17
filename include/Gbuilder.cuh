@@ -230,7 +230,15 @@ __global__ void compute_and_sort_ip_distance_kernel(
     __syncwarp();
 
     // FIXME(shiwen): check the 3rd template.
-    warp_sort<data_type, id_type, 32, lane_width>(distance_sdata,
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    // FIXME(shiwen): check the 3rd template.
+    warp_sort<data_type, id_type, 16, lane_width>(distance_sdata,
                                                   neighbor_id_sdata, true);
 
     __syncwarp();
@@ -254,44 +262,22 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = false,
           typename data_type = float, typename id_type = uint32_t>
 __global__ void rng_prune_kernel(
-    __restrict__ data_type const* base_data, id_type const* __restrict__ graph,
+    data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
     data_type const* __restrict__ neighbor_distance,
     id_type* __restrict__ pruned_graph) {
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
 
   for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
-    // TODO(shiwen): use another kernel to do this distance computing job? ->
-    // maybe we can use tensor core?
-    // TODO(shiwen): is it necessary to compute the distance of all the
-    // neighbor of base? calculate the distance between base_id and its
-    // neighbors.
-    {
-      for (auto neighbor_idx = 0; neighbor_idx < graph_max_in_degree;
-           neighbor_idx++) {
-        auto neighbor_base_id =
-            graph[base_id * graph_max_in_degree + neighbor_idx];
-        if (neighbor_base_id == tomb) {
-          break;
-        }
-        assert(neighbor_base_id < base_num);
-        // TODO(shiwen): FP16?
-        data_type distance = 0;
-        for (auto i = 0; i < dim; i++) {
-          auto x_value = base_data[neighbor_base_id * dim + i];
-          // TODO(shiwen): use shared memory.
-          auto y_value = base_data[base_id * dim + i];
-          distance += x_value * y_value;
-        }
-        neighbor_distance[base_id * graph_max_in_degree + neighbor_idx] =
-            -distance;
-      }
-    }
     // insert base id of the first neighbor first.
     auto neighbor_idx = 0;
-    auto neighbor_base_id = graph[base_id * graph_max_in_degree + 0];
-    pruned_graph[base_id * pruned_graph_max_in_degree + 0] = neighbor_base_id;
     auto pruned_graph_neighbor_idx = 0;
+    auto neighbor_base_id = graph[base_id * graph_max_in_degree + neighbor_idx];
+    if (neighbor_base_id == tomb) {
+      break;
+    }
+    pruned_graph[base_id * pruned_graph_max_in_degree +
+                 pruned_graph_neighbor_idx] = neighbor_base_id;
     neighbor_idx++;
     for (; neighbor_idx < graph_max_in_degree; neighbor_idx++) {
       neighbor_base_id = graph[base_id * graph_max_in_degree + neighbor_idx];
@@ -320,8 +306,11 @@ __global__ void rng_prune_kernel(
       // pass all the distance tests.
       if (compare_idx > pruned_graph_neighbor_idx) {
         pruned_graph_neighbor_idx++;
-        assert(pruned_graph_neighbor_idx < max_in_degree);
-        // NOTE(shiwen): xxxxxxxxxxxxxxxx
+        // NOTE(shiwen):
+        if (pruned_graph_neighbor_idx == pruned_graph_max_in_degree) {
+          break;
+        }
+        assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
         assert(base_id != neighbor_base_id);
         pruned_graph[base_id * pruned_graph_max_in_degree +
                      pruned_graph_neighbor_idx] = neighbor_base_id;
