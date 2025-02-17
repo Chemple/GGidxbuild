@@ -9,6 +9,11 @@ set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_INCLUDES 0)
 
 find_package(CUDA REQUIRED)
 find_package(OpenMP REQUIRED)
+if(OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP CXX_FLAGS: ${OpenMP_CXX_FLAGS}")
+else()
+    message(FATAL_ERROR "OpenMP support not found!")
+endif()
 include_directories(${CUDA_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
@@ -19,6 +24,8 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
+    
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O3 --use_fast_math -Xcompiler=-O3,-march=native,-fopenmp,-DNDEBUG,-Wall,-Wno-unknown-pragmas --fmad=true --generate-line-info --ptxas-options=-v,-O3 --default-stream=per-thread -gencode=arch=compute_86,code=sm_86 -Xcompiler=-fPIC")
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
