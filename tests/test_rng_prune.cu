@@ -80,7 +80,8 @@ class RNGPruneTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // 初始化随机数生成器
-    std::mt19937 gen(42);
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 gen(seed);
     std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
 
     // 分配主机内存

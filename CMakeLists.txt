@@ -20,6 +20,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUG")
+
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -Xcompiler=-O0,-march=native,-fopenmp,-DNDEBUG,-Wall,-Wno-unknown-pragmas --generate-line-info --ptxas-options=-v,-O0 --default-stream=per-thread -gencode=arch=compute_86,code=sm_86 -Xcompiler=-fPIC")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")

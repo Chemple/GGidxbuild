@@ -6,8 +6,10 @@
 #include <cstdint>
 #include <numeric>
 #include <random>
+#include <unordered_set>
 #include <vector>
 #include <cuda_runtime.h>
+#include <omp.h>
 
 namespace Gbuilder {
 namespace Gpu {
@@ -122,27 +124,32 @@ class IPDistanceTest : public ::testing::Test {
  protected:
   void SetUp() override {
     // 初始化随机数生成器
-    std::mt19937 gen(43);
+    std::mt19937 gen(11);
     std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
 
     base_data.resize(base_num * dim);
+    omp_set_num_threads(64);
+#pragma omp parallel for
     for (auto& val : base_data) {
       val = dist(gen);
     }
 
     initial_graph.resize(base_num * graph_max_in_degree);
     std::uniform_int_distribution<uint32_t> id_dist(
-        0, base_num - 2);  // 避免自连接
-
+        0, base_num - 1);  // 避免自连接
+#pragma omp parallel for
     for (uint32_t i = 0; i < base_num; ++i) {
       // 前50%为有效邻居，后50%为tomb
       uint32_t valid_count = graph_max_in_degree / 2;
+      auto set = std::unordered_set<uint32_t>{i};
       for (uint32_t j = 0; j < graph_max_in_degree; ++j) {
         if (j < valid_count) {
           // 生成不等于当前节点i的ID
-          uint32_t neighbor_id = id_dist(gen);
-          neighbor_id += (neighbor_id >= i);  // 跳过当前节点
-          initial_graph[i * graph_max_in_degree + j] = neighbor_id;
+          uint32_t select = id_dist(gen);
+          while (set.find(select) != set.end()) {
+            select = (select + 1) % (base_num - 1);
+          }
+          initial_graph[i * graph_max_in_degree + j] = select;
         } else {
           initial_graph[i * graph_max_in_degree + j] = tomb;
         }
@@ -170,9 +177,9 @@ class IPDistanceTest : public ::testing::Test {
   }
 
   // 公共测试参数
-  static constexpr uint32_t base_num = 64;
+  static constexpr uint32_t base_num = 10 * 1024 * 1024;
   static constexpr uint32_t dim = 128;
-  static constexpr uint32_t graph_max_in_degree = 32;
+  static constexpr uint32_t graph_max_in_degree = 128;
   static constexpr uint32_t pruned_max_in_degree = 16;
   static constexpr uint32_t tomb = 0XFFFFFFFF;
   static constexpr uint32_t grid_size = 72;
@@ -228,6 +235,8 @@ TEST_F(IPDistanceTest, BasicFunctionality) {
   // 计算CPU结果
   std::vector<uint32_t> cpu_graph = initial_graph;
   std::vector<float> cpu_dist(base_num * graph_max_in_degree);
+  SPDLOG_INFO("finish cpu_dist construction");
+
   parallel_compute_and_sort_ip_distance_cpu(base_data.data(), cpu_graph.data(),
                                             cpu_dist.data(), base_num, dim,
                                             graph_max_in_degree, tomb);
@@ -236,12 +245,6 @@ TEST_F(IPDistanceTest, BasicFunctionality) {
 
   compare_id_and_distance(gpu_graph.data(), cpu_graph.data(), gpu_dist.data(),
                           cpu_dist.data(), base_num * graph_max_in_degree);
-
-  // // 验证结果
-  // compare_uint32_arrays(gpu_graph.data(), cpu_graph.data(),
-  //                       base_num * max_in_degree);
-  // compare_float_arrays(gpu_dist.data(), cpu_dist.data(),
-  //                      base_num * max_in_degree);
 }
 
 TEST_F(IPDistanceTest, AllTombstoneCase) {

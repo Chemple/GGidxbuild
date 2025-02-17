@@ -16,6 +16,7 @@
 #pragma once
 
 // TODO: This shouldn't be calling RAFT detail APIs
+#include <cassert>
 #include <cstdint>
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -67,6 +68,7 @@ struct warp_merge_core {
             auto const line_id = i + (N * lane_id);
             auto const p = static_cast<bool>(line_id & b) ==
                            static_cast<bool>(line_id & c);
+            assert(i < N && j < N);
             swap_if_needed(k[i], v[i], k[j], v[j], p);
           }
         }
@@ -80,6 +82,8 @@ struct warp_merge_core {
           static_cast<bool>(lane_id & b) == static_cast<bool>(lane_id & c);
 #pragma unroll
       for (std::uint32_t i = 0; i < N; i++) {
+        assert(i < N);
+
         swap_if_needed(k[i], v[i], c, p);
       }
     }
@@ -89,6 +93,8 @@ struct warp_merge_core {
       for (std::uint32_t i = 0; i < N; i++) {
         std::uint32_t j = i ^ c;
         if (i >= j) continue;
+        assert(i < N && j < N);
+
         swap_if_needed(k[i], v[i], k[j], v[j], p);
       }
     }
