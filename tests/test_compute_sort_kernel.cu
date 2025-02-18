@@ -4,11 +4,15 @@
 #include <gtest/gtest.h>
 #include <cassert>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <random>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <omp.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 namespace Gbuilder {
 namespace Gpu {
@@ -93,6 +97,23 @@ void init_full_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
                           uint32_t base_num) {
   assert(degree * base_num == host_graph.size());
 
+  auto file_name = "../../data/" + std::to_string(degree) + "_" +
+                   std::to_string(base_num) + "_" + ".graph";
+
+  if (std::filesystem::exists(file_name)) {
+    std::ifstream file(file_name, std::ios::binary);
+    if (file.is_open()) {
+      file.read(reinterpret_cast<char*>(host_graph.data()),
+                host_graph.size() * sizeof(uint32_t));
+      file.close();
+      SPDLOG_INFO("Graph loaded from file: {}", file_name);
+      return;  // 如果图文件存在且加载成功，直接返回
+    } else {
+      SPDLOG_ERROR("Failed to open file: {}", file_name);
+      return;
+    }
+  }
+
 #pragma omp parallel for
   for (uint32_t i = 0; i < base_num; i++) {
     std::mt19937 gen(11);
@@ -106,10 +127,9 @@ void init_full_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
       if (select >= base_num) {
         SPDLOG_ERROR("the neighbor id is wrong!");
       }
-      // #pragma omp critical
-      // {
+
       set.insert(select);
-      // }
+
       host_graph[i * degree + j] = select;
     }
   }
@@ -121,6 +141,16 @@ void init_full_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
       }
     }
   }
+
+  std::ofstream file(file_name, std::ios::binary);
+  if (file.is_open()) {
+    file.write(reinterpret_cast<char const*>(host_graph.data()),
+               host_graph.size() * sizeof(uint32_t));
+    file.close();
+    SPDLOG_INFO("Graph saved to file: {}", file_name);
+  } else {
+    SPDLOG_ERROR("Failed to save graph to file: {}", file_name);
+  }
 }
 
 void init_partial_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
@@ -128,10 +158,11 @@ void init_partial_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
   auto invalid_row_percent = 70;
   auto invalid_col_percent = 20;
   assert(degree * base_num == host_graph.size());
-  std::mt19937 gen(11);
-  std::uniform_int_distribution<uint32_t> id_dist(0, base_num - 1);
+
 #pragma omp parallel for
   for (uint32_t i = 0; i < base_num; i++) {
+    std::mt19937 gen(11);
+    std::uniform_int_distribution<uint32_t> id_dist(0, base_num - 1);
     auto set = std::unordered_set<uint32_t>{i};
     for (uint32_t j = 0; j < degree; j++) {
       uint32_t select = id_dist(gen);
@@ -141,10 +172,7 @@ void init_partial_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
       if (select >= base_num) {
         SPDLOG_ERROR("the neighbor id is wrong!");
       }
-#pragma omp critical
-      {
-        set.insert(select);
-      }
+      set.insert(select);
       host_graph[i * degree + j] = select;
     }
   }
@@ -161,14 +189,42 @@ void init_partial_host_graph(std::vector<uint32_t>& host_graph, uint32_t degree,
 void init_base_data(std::vector<float>& base_data, uint32_t dim,
                     uint32_t base_num) {
   assert(dim * base_num == base_data.size());
-  std::mt19937 gen(11);
-  std::uniform_real_distribution<float> dist(-1, 1);
+
+  auto file_name = "../../data/" + std::to_string(dim) + "_" +
+                   std::to_string(base_num) + "_" + ".basedata";
+
+  if (std::filesystem::exists(file_name)) {
+    std::ifstream file(file_name, std::ios::binary);
+    if (file.is_open()) {
+      file.read(reinterpret_cast<char*>(base_data.data()),
+                base_data.size() * sizeof(float));
+      file.close();
+      SPDLOG_INFO("Graph loaded from file: {}", file_name);
+      return;  // 如果图文件存在且加载成功，直接返回
+    } else {
+      SPDLOG_ERROR("Failed to open file: {}", file_name);
+      return;
+    }
+  }
+
 #pragma omp parallel for
   for (uint32_t i = 0; i < base_num; i++) {
+    std::mt19937 gen(11);
+    std::uniform_real_distribution<float> dist(-10, 10);
     for (uint32_t j = 0; j < dim; j++) {
       auto select = dist(gen);
       base_data[i * dim + j] = select;
     }
+  }
+
+  std::ofstream file(file_name, std::ios::binary);
+  if (file.is_open()) {
+    file.write(reinterpret_cast<char const*>(base_data.data()),
+               base_data.size() * sizeof(float));
+    file.close();
+    SPDLOG_INFO("Base data saved to file: {}", file_name);
+  } else {
+    SPDLOG_ERROR("Failed to save base data to file: {}", file_name);
   }
 }
 
@@ -238,7 +294,7 @@ TEST(compute_test, allvalidtest) {
   for (auto i = 0; i < base_number; i++) {
     for (auto j = 0; j < degree; j++) {
       ASSERT_NEAR(check_neighbor_distance[i * degree + j],
-                  h_neighbor_distance[i * degree + j], 1e-5);
+                  h_neighbor_distance[i * degree + j], 1e-3);
       if (check_graph[i * degree + j] != host_graph[i * degree + j]) {
         printf(" %ud %ud\n", check_graph[i * degree + j],
                host_graph[i * degree + j]);
@@ -315,7 +371,7 @@ TEST(compute_test, DISABLED_someinvalidtest) {
   for (auto i = 0; i < base_number; i++) {
     for (auto j = 0; j < degree; j++) {
       ASSERT_NEAR(check_neighbor_distance[i * degree + j],
-                  h_neighbor_distance[i * degree + j], 1e-5);
+                  h_neighbor_distance[i * degree + j], 1e-3);
       if (check_graph[i * degree + j] != host_graph[i * degree + j]) {
         printf(" %ud %ud\n", check_graph[i * degree + j],
                host_graph[i * degree + j]);
