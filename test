@@ -1,0 +1,1868 @@
+siwen@gpu04:~/project/GGidxbuild$ cd script/
+siwen@gpu04:~/project/GGidxbuild/script$ bash ./test_compute_sort.sh
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 14:51:28.579] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 14:51:28.579] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 14:51:39.144] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 14:51:45.969] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 14:51:51.952] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 14:51:57.671] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69431 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (54121 ms)
+[----------] 2 tests from IPDistanceTest (123552 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (123552 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 14:53:33.398] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 14:53:33.398] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 14:53:33.958] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 14:53:38.384] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 14:53:43.227] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 678339 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+^C^C^C
+siwen@gpu04:~/project/GGidxbuild/script$ ^C
+siwen@gpu04:~/project/GGidxbuild/script$ ^C
+siwen@gpu04:~/project/GGidxbuild/script$ ^C
+siwen@gpu04:~/project/GGidxbuild/script$ clear
+siwen@gpu04:~/project/GGidxbuild/script$ bash ./test_compute_sort.sh
+
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 14:54:38.723] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 14:54:38.723] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 14:54:49.285] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 14:54:55.439] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 14:55:01.514] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 14:55:07.575] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67027 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (45323 ms)
+[----------] 2 tests from IPDistanceTest (112351 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (112351 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 14:56:35.317] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 14:56:35.317] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 14:56:45.907] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 14:56:52.176] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 14:56:58.206] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 14:57:04.849] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+^C
+siwen@gpu04:~/project/GGidxbuild/script$ clear
+siwen@gpu04:~/project/GGidxbuild/script$ bash ./test_compute_sort.sh
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 14:58:26.129] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 14:58:26.129] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 14:58:36.682] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 14:58:42.513] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 14:58:48.578] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 14:58:55.132] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (76548 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53885 ms)
+[----------] 2 tests from IPDistanceTest (130433 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (130433 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:00:33.725] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:00:33.725] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:00:44.312] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:00:50.748] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:00:57.826] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:01:07.235] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (77416 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56188 ms)
+[----------] 2 tests from IPDistanceTest (133604 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (133604 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:02:43.329] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:02:43.329] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:02:46.832] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:02:51.294] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:02:57.389] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 682189 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:03:31.732] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:03:31.732] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:03:42.309] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:03:48.574] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:03:54.637] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:04:00.751] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70979 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (57881 ms)
+[----------] 2 tests from IPDistanceTest (128860 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (128860 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:05:40.493] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:05:40.494] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:05:49.991] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:05:54.321] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:06:00.939] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 683039 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:06:34.484] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:06:34.484] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:06:42.925] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:06:47.426] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:06:53.492] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 683370 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:07:27.018] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:07:27.018] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:07:27.546] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:07:31.947] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:07:36.778] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 683686 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:08:08.681] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:08:08.681] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:08:19.271] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:08:25.351] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:08:31.416] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:08:38.109] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70772 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (52732 ms)
+[----------] 2 tests from IPDistanceTest (123505 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (123505 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:10:09.034] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:10:09.034] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:10:19.669] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:10:25.756] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:10:31.800] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:10:38.326] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67499 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (52264 ms)
+[----------] 2 tests from IPDistanceTest (119763 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119763 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:12:09.602] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:12:09.602] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:12:20.238] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:12:26.293] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:12:32.384] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:12:39.990] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69864 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (46973 ms)
+[----------] 2 tests from IPDistanceTest (116837 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (116837 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:14:11.075] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:14:11.075] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:14:13.811] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:14:18.192] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:14:25.037] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 685527 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:14:55.402] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:14:55.402] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:15:06.020] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:15:12.344] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:15:18.383] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:15:24.875] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67078 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49903 ms)
+[----------] 2 tests from IPDistanceTest (116982 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (116982 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:16:53.777] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:16:53.777] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:17:01.797] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:17:06.304] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:17:12.360] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 686347 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:17:45.580] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:17:45.580] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:17:53.734] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:17:58.153] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:18:04.279] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 686987 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:18:34.780] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:18:34.780] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:18:45.379] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:18:51.647] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:18:57.699] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:19:04.424] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68084 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48953 ms)
+[----------] 2 tests from IPDistanceTest (117038 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117038 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:20:33.131] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:20:33.132] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:20:43.742] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:20:49.889] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:20:55.935] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:21:02.008] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69282 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (54823 ms)
+[----------] 2 tests from IPDistanceTest (124106 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (124106 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:22:40.962] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:22:40.962] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:22:51.562] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:22:57.809] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:23:03.845] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:23:10.882] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (73361 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (59289 ms)
+[----------] 2 tests from IPDistanceTest (132650 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (132650 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:24:49.848] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:24:49.848] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:25:00.444] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:25:06.781] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:25:12.836] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:25:19.513] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66943 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53724 ms)
+[----------] 2 tests from IPDistanceTest (120668 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120668 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:26:51.471] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:26:51.471] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:27:02.086] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:27:08.121] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:27:14.854] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:27:21.936] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70985 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (50862 ms)
+[----------] 2 tests from IPDistanceTest (121848 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121848 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:28:51.195] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:28:51.195] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:29:01.821] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:29:08.210] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:29:14.250] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:29:20.437] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66856 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (46027 ms)
+[----------] 2 tests from IPDistanceTest (112884 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (112884 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:30:48.183] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:30:48.183] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:30:58.814] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:31:05.087] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:31:11.098] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:31:16.923] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70652 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49327 ms)
+[----------] 2 tests from IPDistanceTest (119980 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119980 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:32:48.088] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:32:48.088] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:32:58.714] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:33:05.045] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:33:11.883] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:33:16.608] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69741 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48680 ms)
+[----------] 2 tests from IPDistanceTest (118421 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (118421 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:34:46.535] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:34:46.535] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:34:57.143] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:35:03.341] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:35:09.391] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:35:14.861] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69893 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (59654 ms)
+[----------] 2 tests from IPDistanceTest (129548 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (129548 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:36:58.603] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:36:58.603] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:37:09.210] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:37:15.414] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:37:22.310] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:37:27.844] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (73202 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (55001 ms)
+[----------] 2 tests from IPDistanceTest (128203 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (128203 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:39:03.863] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:39:03.863] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:39:14.463] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:39:20.859] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:39:26.962] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:39:32.842] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68997 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49211 ms)
+[----------] 2 tests from IPDistanceTest (118208 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (118208 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:40:57.263] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:40:57.263] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:41:07.877] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:41:14.328] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:41:20.418] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:41:28.372] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66322 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53860 ms)
+[----------] 2 tests from IPDistanceTest (120183 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120183 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:43:02.884] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:43:02.884] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:43:13.494] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:43:19.658] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:43:25.715] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:43:31.855] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70996 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56037 ms)
+[----------] 2 tests from IPDistanceTest (127034 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (127034 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:45:11.459] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:45:11.459] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:45:22.067] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:45:28.430] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:45:35.141] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:45:42.402] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (74574 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (46194 ms)
+[----------] 2 tests from IPDistanceTest (120769 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120769 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:47:06.433] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:47:06.433] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:47:07.976] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:47:12.478] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:47:17.298] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 695151 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:47:48.661] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:47:48.661] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:47:59.243] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:48:05.439] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:48:11.466] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:48:17.687] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68392 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (52217 ms)
+[----------] 2 tests from IPDistanceTest (120609 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120609 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:49:47.610] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:49:47.610] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:49:58.215] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:50:04.433] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:50:10.488] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:50:17.809] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68065 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53775 ms)
+[----------] 2 tests from IPDistanceTest (121841 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121841 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:51:53.738] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:51:53.738] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:52:04.347] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:52:10.622] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:52:16.675] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:52:24.998] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72825 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48379 ms)
+[----------] 2 tests from IPDistanceTest (121204 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121204 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:53:53.420] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:53:53.420] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:53:56.429] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:54:00.830] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:54:05.667] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 697288 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:54:38.498] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:54:38.498] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:54:49.080] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:54:55.371] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:55:01.452] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:55:09.665] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70312 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49608 ms)
+[----------] 2 tests from IPDistanceTest (119920 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119920 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:56:39.949] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:56:39.949] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:56:50.560] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:56:56.895] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:57:02.995] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:57:08.583] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70651 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (50975 ms)
+[----------] 2 tests from IPDistanceTest (121626 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121626 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 15:58:43.000] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 15:58:43.000] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 15:58:53.640] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 15:58:59.657] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 15:59:06.502] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 15:59:13.577] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (74637 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47277 ms)
+[----------] 2 tests from IPDistanceTest (121914 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121914 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:00:43.160] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:00:43.160] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:00:53.789] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:01:00.066] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:01:06.070] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:01:13.633] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70727 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56026 ms)
+[----------] 2 tests from IPDistanceTest (126754 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (126754 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:02:52.005] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:02:52.005] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:03:02.646] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:03:08.555] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:03:14.538] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:03:23.128] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (74097 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53738 ms)
+[----------] 2 tests from IPDistanceTest (127836 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (127836 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:04:59.074] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:04:59.074] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:05:09.694] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:05:16.021] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:05:22.898] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:05:29.929] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72455 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53923 ms)
+[----------] 2 tests from IPDistanceTest (126378 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (126379 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:07:05.261] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:07:05.261] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:07:08.512] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:07:12.859] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:07:20.042] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 700764 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:07:52.937] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:07:52.937] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:08:03.520] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:08:09.766] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:08:15.829] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:08:25.016] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72434 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49728 ms)
+[----------] 2 tests from IPDistanceTest (122163 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (122163 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:09:56.726] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:09:56.726] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:10:07.323] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:10:13.882] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:10:19.945] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:10:25.999] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70864 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56818 ms)
+[----------] 2 tests from IPDistanceTest (127683 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (127683 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:12:03.231] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:12:03.231] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:12:13.829] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:12:20.316] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:12:27.518] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:12:36.681] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72700 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (55391 ms)
+[----------] 2 tests from IPDistanceTest (128091 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (128091 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:14:18.719] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:14:18.719] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:14:29.323] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:14:35.376] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:14:41.362] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:14:50.618] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (78889 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56671 ms)
+[----------] 2 tests from IPDistanceTest (135561 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (135561 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:16:27.552] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:16:27.552] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:16:38.144] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:16:44.635] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:16:50.774] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:16:57.230] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70648 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56115 ms)
+[----------] 2 tests from IPDistanceTest (126764 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (126764 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:18:31.928] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:18:31.928] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:18:42.532] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:18:48.744] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:18:54.797] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:19:01.239] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+/home/siwen/project/GGidxbuild/tests/test_compute_sort_neighbor.cu:118: Failure
+The difference between x[i] and y[i] is 1.1444091796875e-05, which exceeds epsilon, where
+x[i] evaluates to -43.340248107910156,
+y[i] evaluates to -43.340259552001953, and
+epsilon evaluates to 9.9999997473787516e-06.
+at index 531450752
+[  FAILED  ] IPDistanceTest.BasicFunctionality (63647 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53335 ms)
+[----------] 2 tests from IPDistanceTest (116983 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (116983 ms total)
+[  PASSED  ] 1 test.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IPDistanceTest.BasicFunctionality
+
+ 1 FAILED TEST
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:20:31.675] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:20:31.675] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:20:42.279] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:20:48.450] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:20:54.511] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:21:00.205] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70636 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (54623 ms)
+[----------] 2 tests from IPDistanceTest (125259 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (125260 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:22:36.149] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:22:36.149] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:22:46.753] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:22:52.766] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:22:59.458] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:23:04.943] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70308 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47346 ms)
+[----------] 2 tests from IPDistanceTest (117655 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117655 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:24:33.301] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:24:33.301] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:24:43.904] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:24:50.289] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:24:57.112] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:25:06.099] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (73109 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53297 ms)
+[----------] 2 tests from IPDistanceTest (126407 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (126407 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:26:40.855] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:26:40.855] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:26:42.703] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:26:47.108] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:26:51.937] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 706444 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:27:23.543] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:27:23.543] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:27:34.126] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:27:40.405] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:27:46.433] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:27:53.150] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70863 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (50462 ms)
+[----------] 2 tests from IPDistanceTest (121325 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121325 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:29:24.557] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:29:24.558] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:29:35.161] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:29:41.482] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:29:47.575] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:29:54.267] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70342 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (46753 ms)
+[----------] 2 tests from IPDistanceTest (117096 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117096 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:31:23.916] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:31:23.916] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:31:34.515] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:31:40.797] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:31:46.832] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:31:53.248] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72912 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56885 ms)
+[----------] 2 tests from IPDistanceTest (129798 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (129798 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:33:31.044] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:33:31.044] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:33:37.270] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:33:41.633] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:33:47.611] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 708312 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:34:22.226] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:34:22.226] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:34:32.825] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:34:39.139] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:34:45.260] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:34:53.646] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67919 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (51359 ms)
+[----------] 2 tests from IPDistanceTest (119279 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119279 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:36:26.116] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:36:26.116] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:36:36.713] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:36:42.874] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:36:48.932] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:36:57.038] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (73062 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (59418 ms)
+[----------] 2 tests from IPDistanceTest (132480 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (132480 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:38:39.187] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:38:39.187] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:38:49.779] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:38:56.451] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:39:02.503] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:39:10.900] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (74069 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (51817 ms)
+[----------] 2 tests from IPDistanceTest (125886 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (125886 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:40:43.069] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:40:43.069] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:40:46.036] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:40:50.371] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:40:55.209] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 710241 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:41:30.679] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:41:30.679] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:41:41.261] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:41:46.959] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:41:52.978] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:41:59.520] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69007 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (54199 ms)
+[----------] 2 tests from IPDistanceTest (123208 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (123208 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:43:38.084] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:43:38.084] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:43:48.665] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:43:55.542] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:44:03.148] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:44:12.211] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (79296 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49445 ms)
+[----------] 2 tests from IPDistanceTest (128742 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (128742 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:45:41.952] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:45:41.952] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:45:52.549] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:45:58.619] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:46:04.616] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:46:10.315] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68253 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (55947 ms)
+[----------] 2 tests from IPDistanceTest (124201 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (124201 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:47:48.310] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:47:48.310] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:47:58.917] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:48:05.002] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:48:11.742] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:48:20.291] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (75238 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (56210 ms)
+[----------] 2 tests from IPDistanceTest (131448 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (131448 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:49:56.164] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:49:56.164] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:50:06.774] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:50:12.978] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:50:19.014] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:50:26.008] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68729 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (52967 ms)
+[----------] 2 tests from IPDistanceTest (121697 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121697 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:51:58.264] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:51:58.264] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:52:08.877] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:52:15.097] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:52:21.161] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:52:26.803] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67561 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47312 ms)
+[----------] 2 tests from IPDistanceTest (114873 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (114874 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:53:51.366] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:53:51.366] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:54:01.974] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:54:08.028] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:54:14.035] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:54:22.224] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68888 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (52622 ms)
+[----------] 2 tests from IPDistanceTest (121511 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121511 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:55:56.331] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:55:56.331] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:56:06.939] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:56:13.782] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:56:19.867] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:56:27.668] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72999 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47375 ms)
+[----------] 2 tests from IPDistanceTest (120375 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120375 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 16:57:57.803] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 16:57:57.803] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 16:58:08.404] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 16:58:14.764] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 16:58:21.793] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 16:58:30.146] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (73860 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53299 ms)
+[----------] 2 tests from IPDistanceTest (127159 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (127159 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:00:02.872] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:00:02.872] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:00:13.453] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:00:19.762] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:00:25.816] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:00:32.342] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+/home/siwen/project/GGidxbuild/tests/test_compute_sort_neighbor.cu:118: Failure
+The difference between x[i] and y[i] is 1.1444091796875e-05, which exceeds epsilon, where
+x[i] evaluates to -39.147010803222656,
+y[i] evaluates to -39.146999359130859, and
+epsilon evaluates to 9.9999997473787516e-06.
+at index 1153645568
+[  FAILED  ] IPDistanceTest.BasicFunctionality (68925 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53055 ms)
+[----------] 2 tests from IPDistanceTest (121981 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121981 ms total)
+[  PASSED  ] 1 test.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IPDistanceTest.BasicFunctionality
+
+ 1 FAILED TEST
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:02:02.902] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:02:02.902] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:02:13.503] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:02:19.738] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:02:25.819] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:02:31.794] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+/home/siwen/project/GGidxbuild/tests/test_compute_sort_neighbor.cu:118: Failure
+The difference between x[i] and y[i] is 1.1444091796875e-05, which exceeds epsilon, where
+x[i] evaluates to -47.018547058105469,
+y[i] evaluates to -47.018535614013672, and
+epsilon evaluates to 9.9999997473787516e-06.
+at index 960546560
+[  FAILED  ] IPDistanceTest.BasicFunctionality (64999 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (53468 ms)
+[----------] 2 tests from IPDistanceTest (118468 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (118468 ms total)
+[  PASSED  ] 1 test.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] IPDistanceTest.BasicFunctionality
+
+ 1 FAILED TEST
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:04:07.555] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:04:07.555] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:04:18.160] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:04:24.398] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:04:31.003] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:04:39.429] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (74106 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49302 ms)
+[----------] 2 tests from IPDistanceTest (123409 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (123409 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:06:10.075] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:06:10.075] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:06:20.673] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:06:26.963] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:06:33.718] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:06:39.556] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (71943 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47231 ms)
+[----------] 2 tests from IPDistanceTest (119175 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119175 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:08:05.596] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:08:05.596] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:08:16.203] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:08:22.747] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:08:29.666] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:08:38.738] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (71862 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (45853 ms)
+[----------] 2 tests from IPDistanceTest (117715 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117715 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:10:01.457] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:10:01.457] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:10:12.042] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:10:18.954] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:10:25.068] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:10:34.765] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72145 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47343 ms)
+[----------] 2 tests from IPDistanceTest (119489 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119489 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:12:05.453] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:12:05.453] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:12:16.047] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:12:22.001] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:12:28.761] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:12:34.864] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70222 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (50033 ms)
+[----------] 2 tests from IPDistanceTest (120255 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120255 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:14:08.273] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:14:08.273] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:14:18.848] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:14:24.924] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:14:31.936] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:14:37.560] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72662 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (57288 ms)
+[----------] 2 tests from IPDistanceTest (129950 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (129950 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:16:15.142] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:16:15.142] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:16:25.727] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:16:32.038] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:16:38.163] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:16:45.471] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (71673 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47630 ms)
+[----------] 2 tests from IPDistanceTest (119303 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119303 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:18:09.716] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:18:09.716] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:18:20.309] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:18:26.296] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:18:32.337] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:18:40.033] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67445 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (45125 ms)
+[----------] 2 tests from IPDistanceTest (112571 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (112571 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:20:04.815] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:20:04.815] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:20:10.849] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:20:15.237] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:20:20.073] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 721442 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:20:54.608] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:20:54.608] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:21:05.193] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:21:11.421] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:21:17.486] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:21:23.395] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68790 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48196 ms)
+[----------] 2 tests from IPDistanceTest (116986 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (116986 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:22:49.932] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:22:49.932] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:23:00.521] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:23:06.819] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:23:12.875] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:23:19.013] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68086 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49960 ms)
+[----------] 2 tests from IPDistanceTest (118046 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (118046 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:24:52.024] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:24:52.025] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:25:02.618] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:25:08.911] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:25:15.002] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:25:21.289] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70973 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49715 ms)
+[----------] 2 tests from IPDistanceTest (120689 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120689 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:26:50.523] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:26:50.523] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:26:55.706] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:27:00.119] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:27:06.184] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 723426 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:27:40.344] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:27:40.344] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:27:50.922] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:27:57.209] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:28:03.259] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:28:10.123] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72790 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (59130 ms)
+[----------] 2 tests from IPDistanceTest (131920 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (131920 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:29:47.400] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:29:47.400] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:29:57.999] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:30:04.220] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:30:10.328] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:30:17.007] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (68839 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48800 ms)
+[----------] 2 tests from IPDistanceTest (117640 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117640 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:31:47.220] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:31:47.220] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:31:57.834] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:32:04.192] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:32:10.238] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:32:18.032] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70375 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49901 ms)
+[----------] 2 tests from IPDistanceTest (120276 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120276 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:33:44.332] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:33:44.332] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:33:52.829] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:33:57.230] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:34:03.225] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 725614 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:34:33.146] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:34:33.146] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:34:43.773] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:34:50.049] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:34:56.102] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:35:01.687] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66839 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47829 ms)
+[----------] 2 tests from IPDistanceTest (114669 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (114669 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:36:28.816] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:36:28.816] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:36:31.041] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:36:35.463] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:36:40.319] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 726472 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:37:14.854] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:37:14.854] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:37:25.443] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:37:31.659] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:37:37.707] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:37:45.377] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (70335 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (48310 ms)
+[----------] 2 tests from IPDistanceTest (118646 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (118646 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:39:14.027] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:39:14.027] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:39:24.633] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:39:30.967] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:39:37.532] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:39:42.776] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69112 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47616 ms)
+[----------] 2 tests from IPDistanceTest (116728 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (116729 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:41:10.102] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:41:10.102] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:41:20.712] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:41:26.742] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:41:33.329] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:41:40.991] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72288 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (45706 ms)
+[----------] 2 tests from IPDistanceTest (117995 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117995 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:43:10.173] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:43:10.173] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:43:20.772] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:43:27.406] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:43:33.494] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:43:40.029] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72367 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (54330 ms)
+[----------] 2 tests from IPDistanceTest (126697 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (126697 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:45:12.582] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:45:12.582] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:45:23.185] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:45:29.504] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:45:35.566] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:45:41.639] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (67747 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49432 ms)
+[----------] 2 tests from IPDistanceTest (117179 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (117179 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:47:09.882] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:47:09.882] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:47:20.487] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:47:26.900] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:47:33.726] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:47:38.864] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66616 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47845 ms)
+[----------] 2 tests from IPDistanceTest (114462 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (114462 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:49:08.174] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:49:08.174] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:49:18.769] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:49:25.048] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:49:31.798] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:49:37.402] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (71875 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49159 ms)
+[----------] 2 tests from IPDistanceTest (121034 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (121034 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:51:07.013] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:51:07.013] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:51:17.591] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:51:24.164] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:51:30.223] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:51:36.775] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (69935 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49083 ms)
+[----------] 2 tests from IPDistanceTest (119019 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (119019 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:53:03.597] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:53:03.597] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:53:14.186] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:53:20.439] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:53:26.458] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:53:32.282] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (66714 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (47059 ms)
+[----------] 2 tests from IPDistanceTest (113773 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (113773 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:55:01.766] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:55:01.766] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:55:11.612] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:55:15.922] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:55:22.617] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+./test_compute_sort.sh: line 10: 731899 Segmentation fault      (core dumped) $executable
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:55:56.370] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:55:56.370] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:56:06.964] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:56:13.340] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:56:19.438] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:56:25.665] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (71086 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (49371 ms)
+[----------] 2 tests from IPDistanceTest (120458 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (120458 ms total)
+[  PASSED  ] 2 tests.
+Running main() from /home/siwen/project/GGidxbuild/build/_deps/googletest-src/googletest/src/gtest_main.cc
+[==========] Running 2 tests from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 2 tests from IPDistanceTest
+[ RUN      ] IPDistanceTest.BasicFunctionality
+[2025-02-17 17:57:58.099] [info] [test_compute_sort_neighbor.cu:205] begin gpu computation
+[2025-02-17 17:57:58.099] [info] [test_compute_sort_neighbor.cu:206] the share memory size is 16384
+[2025-02-17 17:58:08.681] [info] [test_compute_sort_neighbor.cu:222] finish gpu computation
+[2025-02-17 17:58:14.878] [info] [test_compute_sort_neighbor.cu:233] finish gpu data transfering
+[2025-02-17 17:58:20.983] [info] [test_compute_sort_neighbor.cu:238] finish cpu_dist construction
+[2025-02-17 17:58:28.621] [info] [test_compute_sort_neighbor.cu:244] finish cpu data computation
+[       OK ] IPDistanceTest.BasicFunctionality (72251 ms)
+[ RUN      ] IPDistanceTest.AllTombstoneCase
+[       OK ] IPDistanceTest.AllTombstoneCase (51306 ms)
+[----------] 2 tests from IPDistanceTest (123557 ms total)
+
+[----------] Global test environment tear-down
+[==========] 2 tests from 1 test suite ran. (123557 ms total)
+[  PASSED  ] 2 tests.
+Return code statistics:
+Return code 139: 18 times
+Return code 1: 3 times
+Return code 0: 79 times
+siwen@gpu04:~/project/GGidxbuild/script$

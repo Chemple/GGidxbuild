@@ -68,85 +68,97 @@ __global__ void match_kernel(id_type const* __restrict__ gt_ids,
   }
 }
 
-// each warp is assigned to calculate all the distance between base_vector_id
-// and its neighbor.
-template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
-          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
-          uint32_t shared_memory_size, typename data_type = float,
-          typename id_type = uint32_t>
-__global__ void compute_ip_distance_kernel(
-    data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
-    data_type* __restrict__ neighbor_distance) {
-  constexpr auto lane_width = 32;
-  constexpr auto warp_per_block = block_size / lane_width;
-  // each warp need to store the base vector and the neighbor vector to
-  // calculate the distance between them.
-  constexpr auto shared_memory_size_per_warp = dim * sizeof(data_type) * 2;
-  constexpr auto global_warp_num = block_size * grid_size / lane_width;
-  // NOTE(shiwen): check the allocation of shared memory is correct.
-  static_assert(shared_memory_size ==
-                shared_memory_size_per_warp * warp_per_block);
+// // each warp is assigned to calculate all the distance between base_vector_id
+// // and its neighbor.
+// template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+//           uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+//           uint32_t shared_memory_size, typename data_type = float,
+//           typename id_type = uint32_t>
+// __global__ void compute_ip_distance_kernel(
+//     data_type const* __restrict__ base_data, id_type const* __restrict__
+//     graph, data_type* __restrict__ neighbor_distance) {
+//   constexpr auto lane_width = 32;
+//   constexpr auto warp_per_block = block_size / lane_width;
+//   // each warp need to store the base vector and the neighbor vector to
+//   // calculate the distance between them.
+//   constexpr auto shared_memory_size_per_warp = dim * sizeof(data_type) * 2;
+//   constexpr auto global_warp_num = block_size * grid_size / lane_width;
+//   // NOTE(shiwen): check the allocation of shared memory is correct.
+//   static_assert(shared_memory_size ==
+//                 shared_memory_size_per_warp * warp_per_block);
 
-  // NOTE(shiwen): use offset instead of bytes address.
-  extern __shared__ data_type sdata[];
+//   // NOTE(shiwen): use offset instead of bytes address.
+//   extern __shared__ data_type sdata[];
 
-  auto const global_warp_id =
-      (threadIdx.x + blockDim.x * blockIdx.x) / lane_width;
-  auto const local_warp_id = threadIdx.x / lane_width;
-  auto const lane_id = threadIdx.x % lane_width;
-  auto const base_vector_offset =
-      local_warp_id * shared_memory_size_per_warp / sizeof(data_type);
-  auto const neighbor_vector_offset = base_vector_offset + dim;
+//   auto const global_warp_id =
+//       (threadIdx.x + blockDim.x * blockIdx.x) / lane_width;
+//   auto const local_warp_id = threadIdx.x / lane_width;
+//   auto const lane_id = threadIdx.x % lane_width;
+//   auto const base_vector_offset =
+//       local_warp_id * shared_memory_size_per_warp / sizeof(data_type);
+//   auto const neighbor_vector_offset = base_vector_offset + dim;
 
-  for (auto base_vector_id = global_warp_id; base_vector_id < base_num;
-       base_vector_id += global_warp_num) {
-    for (auto i = lane_id; i < dim; i += lane_width) {
-      assert(i < dim);
-      sdata[base_vector_offset + i] = base_data[base_vector_id * dim + i];
-    }
+//   for (auto base_vector_id = global_warp_id; base_vector_id < base_num;
+//        base_vector_id += global_warp_num) {
+//     for (auto i = lane_id; i < dim; i += lane_width) {
+//       assert(i < dim);
+//       sdata[base_vector_offset + i] = base_data[base_vector_id * dim + i];
+//     }
 
-    // NOTE(shiwen): in case of dim % 32 != 0
-    // TODO(shiwen): need this primitive?
-    __syncwarp();
+//     // NOTE(shiwen): in case of dim % 32 != 0
+//     // TODO(shiwen): need this primitive?
+//     __syncwarp();
 
-    for (auto neighbor_idx = 0; neighbor_idx < max_in_degree; neighbor_idx++) {
-      assert(neighbor_idx < max_in_degree);
-      auto neighbor_base_id =
-          graph[base_vector_id * max_in_degree + neighbor_idx];
-      if (neighbor_base_id == tomb) {
-        break;
-      }
-      for (auto i = lane_id; i < dim; i += lane_width) {
-        assert(i < dim);
-        sdata[neighbor_vector_offset + i] =
-            base_data[neighbor_base_id * dim + i];
-      }
+//     for (auto neighbor_idx = 0; neighbor_idx < max_in_degree; neighbor_idx++)
+//     {
+//       assert(neighbor_idx < max_in_degree);
+//       auto neighbor_base_id =
+//           graph[base_vector_id * max_in_degree + neighbor_idx];
+//       if (neighbor_base_id == tomb) {
+//         break;
+//       }
+//       for (auto i = lane_id; i < dim; i += lane_width) {
+//         assert(i < dim);
+//         sdata[neighbor_vector_offset + i] =
+//             base_data[neighbor_base_id * dim + i];
+//       }
 
-      // NOTE(shiwen): in case of dim % 32 != 0
-      // TODO(shiwen): need this primitive?
-      __syncwarp();
+//       // NOTE(shiwen): in case of dim % 32 != 0
+//       // TODO(shiwen): need this primitive?
+//       __syncwarp();
 
-      data_type sum = 0;
-      for (auto i = lane_id; i < dim; i += lane_width) {
-        assert(i < dim);
-        sum +=
-            sdata[base_vector_offset + i] * sdata[neighbor_vector_offset + i];
-      }
-      // warp level reduce.
-      for (auto offset = 16; offset > 0; offset >>= 1) {
-        sum += __shfl_down_sync(0xffffffff, sum, offset);
-      }
-      if (lane_id == 0) {
-        assert(neighbor_idx < max_in_degree);
-        neighbor_distance[base_vector_id * max_in_degree + neighbor_idx] = -sum;
-      }
+//       data_type sum = 0;
+//       for (auto i = lane_id; i < dim; i += lane_width) {
+//         assert(i < dim);
+//         sum +=
+//             sdata[base_vector_offset + i] * sdata[neighbor_vector_offset +
+//             i];
+//       }
+//       // warp level reduce.
+//       for (auto offset = 16; offset > 0; offset >>= 1) {
+//         sum += __shfl_down_sync(0xffffffff, sum, offset);
+//       }
+//       if (lane_id == 0) {
+//         assert(neighbor_idx < max_in_degree);
+//         neighbor_distance[base_vector_id * max_in_degree + neighbor_idx] =
+//         -sum;
+//       }
 
-      // NOTE(shiwen): in case of dim % 32 != 0
-      // TODO(shiwen): need this primitive?
-      __syncwarp();
-    }
-  }
-}
+//       // NOTE(shiwen): in case of dim % 32 != 0
+//       // TODO(shiwen): need this primitive?
+//       __syncwarp();
+//     }
+//   }
+// }
+
+template <typename id_type = uint32_t, typename data_type = float,
+          uint32_t max_in_degree = 128, uint32_t dim = 128>
+struct compute_sort_warp_state {
+  data_type base_data[dim];
+  data_type neighbor_data[dim];
+  data_type distances[max_in_degree];
+  id_type neighbor_ids[max_in_degree];
+};
 
 // FIXME(shiwen): too much __syncwarp()!!!
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
@@ -154,19 +166,19 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t shared_memory_size, typename data_type = float,
           typename id_type = uint32_t>
 __global__ void compute_and_sort_ip_distance_kernel(
-    data_type const* __restrict__ base_data, id_type* __restrict__ graph,
-    data_type* __restrict__ neighbor_distance) {
+    data_type const* base_data, id_type* graph, data_type* neighbor_distance) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
   constexpr uint32_t shared_memory_size_per_warp =
-      dim * sizeof(data_type) * 2 +
-      max_in_degree * (sizeof(data_type) + sizeof(id_type));
+      sizeof(compute_sort_warp_state<id_type, data_type, max_in_degree, dim>);
   constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
 
   static_assert(shared_memory_size ==
                 shared_memory_size_per_warp * warp_per_block);
 
-  extern __shared__ __align__(sizeof(data_type)) uint8_t shared_memory[];
+  extern __shared__
+      compute_sort_warp_state<id_type, data_type, max_in_degree, dim>
+          warp_states[];
 
   uint32_t const global_warp_id =
       (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
@@ -174,14 +186,10 @@ __global__ void compute_and_sort_ip_distance_kernel(
   uint32_t const lane_id = threadIdx.x % lane_width;
 
   // Shared memory layout per warp
-  data_type* base_vector = reinterpret_cast<data_type*>(
-      &shared_memory[local_warp_id *
-                     (dim * sizeof(data_type) * 2 +
-                      max_in_degree * (sizeof(data_type) + sizeof(id_type)))]);
-  data_type* neighbor_vector = base_vector + dim;
-  data_type* distance_sdata = neighbor_vector + dim;
-  id_type* neighbor_id_sdata =
-      reinterpret_cast<id_type*>(distance_sdata + max_in_degree);
+  data_type* base_vector = warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector = warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
 
   for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
        base_vector_id += global_warp_num) {
@@ -249,8 +257,9 @@ __global__ void compute_and_sort_ip_distance_kernel(
     // FIXME(shiwen): check the 3rd template.
     // FIXME(shiwen): check the 3rd template.
     // FIXME(shiwen): check the 3rd template.
-    warp_sort<data_type, id_type, max_in_degree, lane_width>(
-        distance_sdata, neighbor_id_sdata, true);
+
+    // warp_sort<data_type, id_type, max_in_degree, lane_width>(
+    //     distance_sdata, neighbor_id_sdata, true);
 
     __syncwarp();
 
