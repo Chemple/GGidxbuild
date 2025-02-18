@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cfloat>
 #include <cstdint>
+#include <cstdio>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <unistd.h>
@@ -152,7 +153,7 @@ __global__ void match_kernel(id_type const* __restrict__ gt_ids,
 // }
 
 template <typename id_type = uint32_t, typename data_type = float,
-          uint32_t max_in_degree = 128, uint32_t dim = 128>
+          uint32_t max_in_degree = 64, uint32_t dim = 128>
 struct compute_sort_warp_state {
   data_type base_data[dim];
   data_type neighbor_data[dim];
@@ -186,8 +187,8 @@ __global__ void compute_and_sort_ip_distance_kernel(
   uint32_t const lane_id = threadIdx.x % lane_width;
 
   // Shared memory layout per warp
-  data_type* base_vector = warp_states[local_warp_id].base_data;
-  data_type* neighbor_vector = warp_states[local_warp_id].neighbor_data;
+  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
   data_type* distance_sdata = warp_states[local_warp_id].distances;
   id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
 
@@ -196,17 +197,24 @@ __global__ void compute_and_sort_ip_distance_kernel(
     // Load base vector
     for (uint32_t i = lane_id; i < dim; i += lane_width) {
       assert(i < dim);
-      base_vector[i] = base_data[base_vector_id * dim + i];
+      base_vector_sdata[i] = base_data[base_vector_id * dim + i];
     }
     __syncwarp();
 
-    uint32_t min_invalid_neighbor_idx = max_in_degree - 1;
+    uint32_t min_invalid_neighbor_idx = max_in_degree;
     // Process neighbors and collect distances
     for (uint32_t neighbor_idx = 0; neighbor_idx < max_in_degree;
          ++neighbor_idx) {
+      __syncwarp();
       assert(neighbor_idx < max_in_degree);
+      assert(base_vector_id < base_num);
+
       id_type const neighbor_id =
           graph[base_vector_id * max_in_degree + neighbor_idx];
+
+      assert(neighbor_id < base_num);
+      __syncwarp();
+
       if (neighbor_id == tomb) {
         min_invalid_neighbor_idx = neighbor_idx;
         // NOTE(shiwen): set all distance of tomb id to FLT_MAX
@@ -218,21 +226,25 @@ __global__ void compute_and_sort_ip_distance_kernel(
           }
         }
         __syncwarp();
+
         break;
       }
 
       // Load neighbor vector
       for (uint32_t i = lane_id; i < dim; i += lane_width) {
         assert(i < dim);
-        neighbor_vector[i] = base_data[neighbor_id * dim + i];
+        assert(neighbor_id < base_num);
+
+        neighbor_vector_sdata[i] = base_data[neighbor_id * dim + i];
       }
       __syncwarp();
 
       data_type sum = 0;
       for (uint32_t i = lane_id; i < dim; i += lane_width) {
         assert(i < dim);
-        sum += base_vector[i] * neighbor_vector[i];
+        sum += base_vector_sdata[i] * neighbor_vector_sdata[i];
       }
+
       for (int offset = 16; offset > 0; offset >>= 1) {
         sum += __shfl_down_sync(0xffffffff, sum, offset);
       }
@@ -249,22 +261,12 @@ __global__ void compute_and_sort_ip_distance_kernel(
     __syncwarp();
 
     // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-    // FIXME(shiwen): check the 3rd template.
-
-    // warp_sort<data_type, id_type, max_in_degree, lane_width>(
-    //     distance_sdata, neighbor_id_sdata, true);
+    warp_sort<data_type, id_type, max_in_degree, lane_width>(
+        distance_sdata, neighbor_id_sdata, true);
 
     __syncwarp();
 
     for (uint32_t i = lane_id; i < max_in_degree; i += lane_width) {
-      assert(i < max_in_degree);
       assert(i < max_in_degree);
       if (i < min_invalid_neighbor_idx) {
         neighbor_distance[base_vector_id * max_in_degree + i] =
