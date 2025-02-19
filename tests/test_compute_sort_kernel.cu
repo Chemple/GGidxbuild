@@ -233,8 +233,8 @@ TEST(compute_test, allvalidtest) {
   constexpr uint32_t base_number = 1024 * 1024 * 10;
   constexpr uint32_t degree = 64;
   constexpr uint32_t dim = 128;
-  constexpr uint32_t grid_size = 72;
-  constexpr uint32_t block_size = 256;
+  constexpr uint32_t grid_size = 72 * 2;
+  constexpr uint32_t block_size = 512;
   constexpr uint32_t share_memory_size =
       sizeof(compute_sort_warp_state<uint32_t, float, degree, dim>) *
       block_size / 32;
@@ -279,9 +279,13 @@ TEST(compute_test, allvalidtest) {
   auto host_grah_test = std::vector<uint32_t>{};
   host_grah_test = host_graph;
 
+  SPDLOG_INFO("begin cpu computation");
+
   parallel_compute_and_sort_ip_distance_cpu(
       host_base_data.data(), host_graph.data(), h_neighbor_distance.data(),
       base_number, dim, degree, 0xFFFFFFFF);
+
+  SPDLOG_INFO("finish cpu computation");
 
   auto check_graph = std::vector<uint32_t>(base_number * degree);
   auto check_neighbor_distance = std::vector<float>(base_number * degree);
@@ -292,94 +296,101 @@ TEST(compute_test, allvalidtest) {
              sizeof(float) * base_number * degree, cudaMemcpyDeviceToHost);
 
   for (auto i = 0; i < base_number; i++) {
+    auto gpu_neighbor_set = std::unordered_set<uint32_t>{};
+    auto cpu_neighbor_set = std::unordered_set<uint32_t>{};
     for (auto j = 0; j < degree; j++) {
       ASSERT_NEAR(check_neighbor_distance[i * degree + j],
                   h_neighbor_distance[i * degree + j], 1e-3);
       if (check_graph[i * degree + j] != host_graph[i * degree + j]) {
-        printf(" %ud %ud\n", check_graph[i * degree + j],
-               host_graph[i * degree + j]);
+        gpu_neighbor_set.insert(check_graph[i * degree + j]);
+        cpu_neighbor_set.insert(host_graph[i * degree + j]);
       }
+    }
+    for (auto const& gpu_id : gpu_neighbor_set) {
+      ASSERT_TRUE(cpu_neighbor_set.find(gpu_id) != cpu_neighbor_set.end());
     }
   }
 
   // cudaCheckError();
 }
 
-TEST(compute_test, DISABLED_someinvalidtest) {
-  omp_set_num_threads(64);
-  constexpr uint32_t base_number = 1024 * 1024 * 10;
-  constexpr uint32_t degree = 64;
-  constexpr uint32_t dim = 128;
-  constexpr uint32_t grid_size = 72;
-  constexpr uint32_t block_size = 256;
-  constexpr uint32_t share_memory_size =
-      sizeof(compute_sort_warp_state<uint32_t, float, degree, dim>) *
-      block_size / 32;
-  auto host_graph = std::vector<uint32_t>(base_number * degree);
-  auto host_base_data = std::vector<float>(base_number * dim);
-  init_base_data(host_base_data, dim, base_number);
-  init_full_host_graph(host_graph, degree, base_number);
+// TEST(compute_test, DISABLED_someinvalidtest) {
+//   omp_set_num_threads(64);
+//   constexpr uint32_t base_number = 1024 * 1024 * 10;
+//   constexpr uint32_t degree = 64;
+//   constexpr uint32_t dim = 128;
+//   constexpr uint32_t grid_size = 72;
+//   constexpr uint32_t block_size = 256;
+//   constexpr uint32_t share_memory_size =
+//       sizeof(compute_sort_warp_state<uint32_t, float, degree, dim>) *
+//       block_size / 32;
+//   auto host_graph = std::vector<uint32_t>(base_number * degree);
+//   auto host_base_data = std::vector<float>(base_number * dim);
+//   init_base_data(host_base_data, dim, base_number);
+//   init_full_host_graph(host_graph, degree, base_number);
 
-  uint32_t* d_graph;
-  float* d_base_data;
-  float* d_neighbor_distance;
+//   uint32_t* d_graph;
+//   float* d_base_data;
+//   float* d_neighbor_distance;
 
-  cudaMalloc(&d_graph, sizeof(uint32_t) * base_number * degree);
-  cudaCheckError();
-  cudaMalloc(&d_base_data, sizeof(float) * base_number * dim);
-  cudaCheckError();
-  cudaMalloc(&d_neighbor_distance, sizeof(float) * base_number * degree);
-  cudaCheckError();
+//   cudaMalloc(&d_graph, sizeof(uint32_t) * base_number * degree);
+//   cudaCheckError();
+//   cudaMalloc(&d_base_data, sizeof(float) * base_number * dim);
+//   cudaCheckError();
+//   cudaMalloc(&d_neighbor_distance, sizeof(float) * base_number * degree);
+//   cudaCheckError();
 
-  cudaMemcpy(d_base_data, host_base_data.data(),
-             sizeof(float) * base_number * dim, cudaMemcpyHostToDevice);
-  cudaCheckError();
+//   cudaMemcpy(d_base_data, host_base_data.data(),
+//              sizeof(float) * base_number * dim, cudaMemcpyHostToDevice);
+//   cudaCheckError();
 
-  cudaMemcpy(d_graph, host_graph.data(),
-             sizeof(uint32_t) * base_number * degree, cudaMemcpyHostToDevice);
-  cudaCheckError();
+//   cudaMemcpy(d_graph, host_graph.data(),
+//              sizeof(uint32_t) * base_number * degree,
+//              cudaMemcpyHostToDevice);
+//   cudaCheckError();
 
-  SPDLOG_INFO("finish cuda malloc and cuda memcpy");
-  compute_and_sort_ip_distance_kernel<grid_size, block_size, base_number,
-                                      degree, 0xFFFFFFFF, dim,
-                                      share_memory_size>
-      <<<grid_size, block_size, share_memory_size>>>(d_base_data, d_graph,
-                                                     d_neighbor_distance);
+//   SPDLOG_INFO("finish cuda malloc and cuda memcpy");
+//   compute_and_sort_ip_distance_kernel<grid_size, block_size, base_number,
+//                                       degree, 0xFFFFFFFF, dim,
+//                                       share_memory_size>
+//       <<<grid_size, block_size, share_memory_size>>>(d_base_data, d_graph,
+//                                                      d_neighbor_distance);
 
-  cudaCheckError();
+//   cudaCheckError();
 
-  cudaDeviceSynchronize();
-  SPDLOG_INFO("finish gpu compute");
+//   cudaDeviceSynchronize();
+//   SPDLOG_INFO("finish gpu compute");
 
-  auto h_neighbor_distance = std::vector<float>(base_number * degree);
+//   auto h_neighbor_distance = std::vector<float>(base_number * degree);
 
-  auto host_grah_test = std::vector<uint32_t>{};
-  host_grah_test = host_graph;
+//   auto host_grah_test = std::vector<uint32_t>{};
+//   host_grah_test = host_graph;
 
-  parallel_compute_and_sort_ip_distance_cpu(
-      host_base_data.data(), host_graph.data(), h_neighbor_distance.data(),
-      base_number, dim, degree, 0xFFFFFFFF);
+//   parallel_compute_and_sort_ip_distance_cpu(
+//       host_base_data.data(), host_graph.data(), h_neighbor_distance.data(),
+//       base_number, dim, degree, 0xFFFFFFFF);
 
-  auto check_graph = std::vector<uint32_t>(base_number * degree);
-  auto check_neighbor_distance = std::vector<float>(base_number * degree);
+//   auto check_graph = std::vector<uint32_t>(base_number * degree);
+//   auto check_neighbor_distance = std::vector<float>(base_number * degree);
 
-  cudaMemcpy(check_graph.data(), d_graph,
-             sizeof(uint32_t) * base_number * degree, cudaMemcpyDeviceToHost);
-  cudaMemcpy(check_neighbor_distance.data(), d_neighbor_distance,
-             sizeof(float) * base_number * degree, cudaMemcpyDeviceToHost);
+//   cudaMemcpy(check_graph.data(), d_graph,
+//              sizeof(uint32_t) * base_number * degree,
+//              cudaMemcpyDeviceToHost);
+//   cudaMemcpy(check_neighbor_distance.data(), d_neighbor_distance,
+//              sizeof(float) * base_number * degree, cudaMemcpyDeviceToHost);
 
-  for (auto i = 0; i < base_number; i++) {
-    for (auto j = 0; j < degree; j++) {
-      ASSERT_NEAR(check_neighbor_distance[i * degree + j],
-                  h_neighbor_distance[i * degree + j], 1e-3);
-      if (check_graph[i * degree + j] != host_graph[i * degree + j]) {
-        printf(" %ud %ud\n", check_graph[i * degree + j],
-               host_graph[i * degree + j]);
-      }
-    }
-  }
+//   for (auto i = 0; i < base_number; i++) {
+//     for (auto j = 0; j < degree; j++) {
+//       ASSERT_NEAR(check_neighbor_distance[i * degree + j],
+//                   h_neighbor_distance[i * degree + j], 1e-3);
+//       if (check_graph[i * degree + j] != host_graph[i * degree + j]) {
+//         printf(" %ud %ud\n", check_graph[i * degree + j],
+//                host_graph[i * degree + j]);
+//       }
+//     }
+//   }
 
-  // cudaCheckError();
-}
+//   // cudaCheckError();
+// }
 }  // namespace Gpu
 }  // namespace Gbuilder

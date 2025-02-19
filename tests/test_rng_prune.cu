@@ -2,8 +2,11 @@
 #include "spdlog/spdlog.h"
 #include <gtest/gtest.h>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <random>
 #include <set>
+#include <unordered_set>
 #include <vector>
 #include <cuda_runtime.h>
 #include <omp.h>
@@ -76,13 +79,112 @@ void cpu_rng_prune(data_type const* base_data, id_type const* graph,
   }
 }
 
+inline void init_full_host_graph(std::vector<uint32_t>& host_graph,
+                                 uint32_t degree, uint32_t base_num) {
+  assert(degree * base_num == host_graph.size());
+
+  auto file_name = "../../data/" + std::to_string(degree) + "_" +
+                   std::to_string(base_num) + "_" + ".graph";
+
+  if (std::filesystem::exists(file_name)) {
+    std::ifstream file(file_name, std::ios::binary);
+    if (file.is_open()) {
+      file.read(reinterpret_cast<char*>(host_graph.data()),
+                host_graph.size() * sizeof(uint32_t));
+      file.close();
+      SPDLOG_INFO("Graph loaded from file: {}", file_name);
+      return;  // 如果图文件存在且加载成功，直接返回
+    } else {
+      SPDLOG_ERROR("Failed to open file: {}", file_name);
+      return;
+    }
+  }
+
+#pragma omp parallel for
+  for (uint32_t i = 0; i < base_num; i++) {
+    std::mt19937 gen(11);
+    std::uniform_int_distribution<uint32_t> id_dist(0, base_num - 1);
+    auto set = std::unordered_set<uint32_t>{i};
+    for (uint32_t j = 0; j < degree; j++) {
+      uint32_t select = id_dist(gen);
+      while (set.find(select) != set.end()) {
+        select = (select + 1) % base_num;
+      }
+      if (select >= base_num) {
+        SPDLOG_ERROR("the neighbor id is wrong!");
+      }
+
+      set.insert(select);
+
+      host_graph[i * degree + j] = select;
+    }
+  }
+
+  for (uint32_t i = 0; i < base_num; i++) {
+    for (uint32_t j = 0; j < degree; j++) {
+      if (host_graph[i * degree + j] >= base_num) {
+        SPDLOG_ERROR("post the neighbor id is wrong!");
+      }
+    }
+  }
+
+  std::ofstream file(file_name, std::ios::binary);
+  if (file.is_open()) {
+    file.write(reinterpret_cast<char const*>(host_graph.data()),
+               host_graph.size() * sizeof(uint32_t));
+    file.close();
+    SPDLOG_INFO("Graph saved to file: {}", file_name);
+  } else {
+    SPDLOG_ERROR("Failed to save graph to file: {}", file_name);
+  }
+}
+
+inline void init_base_data(std::vector<float>& base_data, uint32_t dim,
+                           uint32_t base_num) {
+  assert(dim * base_num == base_data.size());
+
+  auto file_name = "../../data/" + std::to_string(dim) + "_" +
+                   std::to_string(base_num) + "_" + ".basedata";
+
+  if (std::filesystem::exists(file_name)) {
+    std::ifstream file(file_name, std::ios::binary);
+    if (file.is_open()) {
+      file.read(reinterpret_cast<char*>(base_data.data()),
+                base_data.size() * sizeof(float));
+      file.close();
+      SPDLOG_INFO("Graph loaded from file: {}", file_name);
+      return;  // 如果图文件存在且加载成功，直接返回
+    } else {
+      SPDLOG_ERROR("Failed to open file: {}", file_name);
+      return;
+    }
+  }
+
+#pragma omp parallel for
+  for (uint32_t i = 0; i < base_num; i++) {
+    std::mt19937 gen(11);
+    std::uniform_real_distribution<float> dist(-10, 10);
+    for (uint32_t j = 0; j < dim; j++) {
+      auto select = dist(gen);
+      base_data[i * dim + j] = select;
+    }
+  }
+
+  std::ofstream file(file_name, std::ios::binary);
+  if (file.is_open()) {
+    file.write(reinterpret_cast<char const*>(base_data.data()),
+               base_data.size() * sizeof(float));
+    file.close();
+    SPDLOG_INFO("Base data saved to file: {}", file_name);
+  } else {
+    SPDLOG_ERROR("Failed to save base data to file: {}", file_name);
+  }
+}
+
 class RNGPruneTest : public ::testing::Test {
  protected:
   void SetUp() override {
-    // 初始化随机数生成器
-    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::mt19937 gen(seed);
-    std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+    SPDLOG_INFO("begin setup...");
 
     // 分配主机内存
     host_base_data.resize(base_num * dim);
@@ -90,28 +192,8 @@ class RNGPruneTest : public ::testing::Test {
     host_pruned_gpu.resize(base_num * pruned_max_in_degree);
     host_pruned_cpu.resize(base_num * pruned_max_in_degree);
 
-    // 生成随机base数据
-    for (auto& v : host_base_data) v = dist(gen);
-
-    SPDLOG_INFO("begin gen the graph");
-    // 生成随机图结构（填充有效邻居）
-    std::uniform_int_distribution<uint32_t> id_dist(0, base_num - 1);
-    omp_set_num_threads(64);
-
-#pragma omp parallel for
-    for (uint32_t i = 0; i < base_num; ++i) {
-      auto set = std::set<uint32_t>{};
-      set.insert(i);
-      for (uint32_t j = 0; j < graph_max_in_degree; ++j) {
-        auto select = id_dist(gen);
-        while (set.find(select) != set.end()) {
-          select = (select + 1) % base_num;
-          // SPDLOG_INFO("the select is {}, i is {}", select, i);
-        }
-        set.insert(select);
-        host_graph[i * graph_max_in_degree + j] = select;
-      }
-    }
+    init_base_data(host_base_data, dim, base_num);
+    init_full_host_graph(host_graph, graph_max_in_degree, base_num);
 
     SPDLOG_INFO("finish setup...");
   }
