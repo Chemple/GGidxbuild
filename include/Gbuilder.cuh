@@ -167,7 +167,8 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t shared_memory_size, typename data_type = float,
           typename id_type = uint32_t>
 __global__ void compute_and_sort_ip_distance_kernel(
-    data_type const* base_data, id_type* graph, data_type* neighbor_distance) {
+    data_type const* __restrict__ base_data, id_type* __restrict__ graph,
+    data_type* __restrict__ neighbor_distance) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
   constexpr uint32_t shared_memory_size_per_warp =

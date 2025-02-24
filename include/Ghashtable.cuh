@@ -4,7 +4,6 @@
 #include <cfloat>
 #include <cstdint>
 #include <cstdio>
-#include <__clang_cuda_runtime_wrapper.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <unistd.h>
