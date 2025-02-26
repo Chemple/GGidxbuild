@@ -10,7 +10,7 @@
 
 namespace Gbuilder {
 namespace Gpu {
-template <typename key_type = uint32_t, uint32_t table_size = 1 << 11>
+template <typename key_type = uint32_t, uint32_t table_size = 1 << 12>
 struct HashTable {
   // NOTE(shiwen): the key start at 1. Empty is 0.
   key_type list_[table_size];
@@ -33,6 +33,21 @@ struct HashTable {
     }
     return false;
   }
+
+  // NOTE(shiwen): for sync reset
+  __device__ __forceinline__ bool reset_sync(uint32_t const& lane_id) {
+    // FIXME(shiwen): maybe other cuda API..?
+    constexpr uint32_t lane_width = 32;
+    for (auto i = lane_id; i < table_size; i += lane_width) {
+      list_[i] = 0;
+    }
+  }
+
+  // NOTE(shiwen): for async reset
+  __device__ __forceinline__ bool reset_async() {}
+
+  // NOTE(shiwen): barrier
+  __device__ __forceinline__ bool sync() {}
 };
 }  // namespace Gpu
 }  // namespace Gbuilder
