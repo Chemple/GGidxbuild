@@ -3,9 +3,17 @@
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <cstdio>
+#include <ctime>
+#include <filesystem>
+#include <fstream>
+#include <queue>
 #include <random>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <omp.h>
+#include <sys/types.h>
 
 namespace Gbuilder {
 namespace Gpu {
@@ -53,9 +61,10 @@ bool cpu_ref(id_type* __restrict__ topm_ids,
   return true;
 }
 
-void print_vec(std::vector<uint32_t> const& vec) {
+template <typename vec_tye>
+void print_vec(std::vector<vec_tye> const& vec) {
   for (auto const& elem : vec) {
-    printf("%u,", elem);
+    std::cout << elem << ",";
   }
   printf("\n");
 }
@@ -69,6 +78,93 @@ void check_vec(std::vector<uint32_t> const& vec0,
           i, vec0[i], vec1[i]);
     }
   }
+}
+
+template <typename data_type = float, typename id_type = uint32_t>
+using candidate_pool = std::priority_queue<std::pair<data_type, id_type>>;
+
+template <typename data_type = float, typename id_type = uint32_t,
+          uint32_t base_num, uint32_t dim, uint32_t degree>
+candidate_pool<data_type, id_type> search(id_type const* graph,
+                                          data_type const* data,
+                                          data_type const* query, uint32_t topk,
+                                          uint32_t L, uint32_t ep) {
+  auto dist_func = [](data_type const* query, data_type const* candidate,
+                      uint32_t dimention) {
+    data_type dist = 0;
+    for (auto i = 0; i < dimention; i++) {
+      // SPDLOG_INFO("query[i] is {}, candidate[i] is {}", query[i],
+      // candidate[i]);
+      dist += query[i] * candidate[i];
+    }
+    return -dist;
+  };
+
+  auto visit_table = std::unordered_set<id_type>{};
+  candidate_pool<data_type, id_type> top_candidates;
+  candidate_pool<data_type, id_type> candidate_set;
+
+  data_type dist = dist_func(query, data + ep * dim, dim);
+  top_candidates.emplace(dist, ep);
+  candidate_set.emplace(-dist, ep);
+  visit_table.insert(ep);
+
+  while (!candidate_set.empty()) {
+    auto current_node_pair = candidate_set.top();
+    candidate_set.pop();
+    if ((-current_node_pair.first) > top_candidates.top().first &&
+        top_candidates.size() == L)
+      break;
+    for (size_t m = 0; m < degree; m++) {
+      unsigned candidate_id = graph[current_node_pair.second * degree + m];
+      if (candidate_id == 0XFFFFFFFF) {
+        continue;
+      }
+      if (visit_table.find(candidate_id) != visit_table.end()) continue;
+      visit_table.insert(candidate_id);
+      float dist = dist_func(query, data + candidate_id * dim, dim);
+      if (top_candidates.size() < L || top_candidates.top().first > dist) {
+        candidate_set.emplace(-dist, candidate_id);
+        top_candidates.emplace(dist, candidate_id);
+        if (top_candidates.size() > L) top_candidates.pop();
+      }
+    }
+  }
+  while (top_candidates.size() > topk) {
+    top_candidates.pop();
+  }
+  return top_candidates;
+}
+
+template <uint32_t query_num, uint32_t base_num, uint32_t dim, uint32_t topk,
+          uint32_t gt_topk, uint32_t degree, typename data_type,
+          typename id_type>
+void testSearch(id_type const* graph, data_type* data, data_type* query,
+                id_type* gt, uint32_t L) {
+  std::vector<candidate_pool<data_type, id_type>> knn(query_num);
+
+  for (size_t i = 0; i < query_num; i++) {
+    knn[i] = search<float, uint32_t, base_num, dim, degree>(
+        graph, data, query + i * dim, topk, L, 1000);
+  }
+
+  float recall = 0;
+  for (size_t i = 0; i < query_num; i++) {
+    auto tmp = knn[i];
+    auto hash_table = std::unordered_set<uint32_t>{};
+    float num = 0;
+    while (!tmp.empty()) {
+      hash_table.insert(tmp.top().second);
+      tmp.pop();
+    }
+    for (auto j = 0; j < topk; j++) {
+      if (hash_table.find(gt[i * gt_topk + j]) != hash_table.end()) {
+        num++;
+      }
+    }
+    recall += num / topk;
+  }
+  std::cout << "recall: " << recall / query_num << std::endl;
 }
 
 TEST(TestSearch, TestSelectTopPSimple) {
@@ -114,6 +210,63 @@ TEST(TestSearch, TestSelectTopPSimple) {
   // check_vec(host_list, check_host_list);
 
   ASSERT_EQ(host_list, check_host_list);
+}
+
+template <typename vec_type>
+bool read_vec_from_file(std::vector<vec_type>& vec, char const* file_path) {
+  if (std::filesystem::exists(file_path)) {
+    std::ifstream file(file_path, std::ios::binary);
+    if (file.is_open()) {
+      file.read(reinterpret_cast<char*>(vec.data()),
+                vec.size() * sizeof(vec_type));
+      file.close();
+      SPDLOG_INFO("loaded from file: {}", file_path);
+      return true;
+    } else {
+      SPDLOG_ERROR("Failed to open file: {}", file_path);
+      return false;
+    }
+  }
+  SPDLOG_ERROR("file is not exist: {}", file_path);
+  return false;
+}
+
+TEST(TestSearch, TestSearch) {
+  constexpr uint32_t dim = 128;
+  constexpr uint32_t degree = 64;
+  constexpr uint32_t base_num = 10000;
+  constexpr uint32_t query_num = 10;
+  constexpr uint32_t gt_topk = 128;
+  constexpr uint32_t topk = 10;
+
+  auto host_graph = std::vector<uint32_t>(degree * base_num);
+  auto host_data = std::vector<float>(dim * base_num);
+  // auto host_query = std::vector<float>(query_num * dim);
+  auto gt = std::vector<uint32_t>(gt_topk * base_num);
+
+  auto graph_file_name = "/home/shiwen/project/GGidxbuild/data/graph.bin";
+  auto data_file_name = "/home/shiwen/project/GGidxbuild/data/vectors.fbin";
+  auto gt_file_name = "/home/shiwen/project/GGidxbuild/data/groundtruth.ibin";
+
+  read_vec_from_file(host_graph, graph_file_name);
+  read_vec_from_file(host_data, data_file_name);
+  read_vec_from_file(gt, gt_file_name);
+
+  // print_vec(host_data);
+
+  // std::mt19937
+  // gen(std::chrono::system_clock::now().time_since_epoch().count());
+  // std::uniform_real_distribution<float> random_val(-1, 1);
+  // for (auto& elem : host_query) {
+  //   elem = random_val(gen);
+  // }
+
+  uint32_t* d_graph = nullptr;
+  uint32_t* d_base_data = nullptr;
+  uint32_t* d_result = nullptr;
+
+  testSearch<query_num, base_num, dim, topk, gt_topk, degree, float, uint32_t>(
+      host_graph.data(), host_data.data(), host_data.data(), gt.data(), 256);
 }
 }  // namespace Gpu
 }  // namespace Gbuilder
