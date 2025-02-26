@@ -106,11 +106,11 @@ __device__ __forceinline__ bool collect_top_p_normal(
 }
 
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
-          uint32_t dim, uint32_t max_degree, uint32_t shared_memory_size,
-          uint32_t Km = 128, uint32_t Kp = 6, uint32_t Kd = 64, uint32_t topk,
-          uint32_t tomb = 0XFFFFFFFF, uint32_t hash_table_size = 1 << 11,
-          uint32_t reset_iter = 4, typename id_type = uint32_t,
-          typename data_type = float>
+          uint32_t query_num, uint32_t dim, uint32_t max_degree,
+          uint32_t shared_memory_size, uint32_t Km = 128, uint32_t Kp = 6,
+          uint32_t Kd = 64, uint32_t topk, uint32_t tomb = 0XFFFFFFFF,
+          uint32_t hash_table_size = 1 << 11, uint32_t reset_iter = 4,
+          typename id_type = uint32_t, typename data_type = float>
 __global__ void enhance_search(data_type* base_data, id_type* graph,
                                id_type* result) {
   constexpr uint32_t lane_width = 32;
@@ -130,7 +130,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
   // Kd must be smaller than max_degree
   static_assert(max_degree <= Kd);
   // the topk must be smaller than Km.
-  static_assert(topk < Km);
+  static_assert(topk <= Km + Kp * Kd);
 
   extern __shared__
       search_warp_state<id_type, data_type, dim, Km, Kp, Kd, hash_table_size>
@@ -150,7 +150,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
       &warp_states[local_warp_id].visit_;
 
   // NOTE(shiwen): query num is base num.
-  for (uint32_t query_id = global_warp_id; query_id < base_num;
+  for (uint32_t query_id = global_warp_id; query_id < query_num;
        query_id += global_warp_num) {
     // Load base vector
     for (uint32_t i = lane_id; i < dim; i += lane_width) {
