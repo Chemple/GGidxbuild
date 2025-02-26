@@ -235,16 +235,17 @@ TEST(TestSearch, TestSearch) {
   constexpr uint32_t dim = 128;
   constexpr uint32_t degree = 64;
   constexpr uint32_t base_num = 10000;
-  constexpr uint32_t query_num = 10;
-  constexpr uint32_t gt_topk = 128;
-  constexpr uint32_t topk = 10;
+  constexpr uint32_t query_num = 10000;
+  constexpr uint32_t gt_topk = 100;
+  constexpr uint32_t topk = 100;
 
   auto host_graph = std::vector<uint32_t>(degree * base_num);
   auto host_data = std::vector<float>(dim * base_num);
   // auto host_query = std::vector<float>(query_num * dim);
   auto gt = std::vector<uint32_t>(gt_topk * base_num);
 
-  auto graph_file_name = "/home/shiwen/project/GGidxbuild/data/graph.bin";
+  auto graph_file_name =
+      "/home/shiwen/project/GGidxbuild/data/search_graph.bin";
   auto data_file_name = "/home/shiwen/project/GGidxbuild/data/vectors.fbin";
   auto gt_file_name = "/home/shiwen/project/GGidxbuild/data/groundtruth.ibin";
 
@@ -266,7 +267,85 @@ TEST(TestSearch, TestSearch) {
   uint32_t* d_result = nullptr;
 
   testSearch<query_num, base_num, dim, topk, gt_topk, degree, float, uint32_t>(
-      host_graph.data(), host_data.data(), host_data.data(), gt.data(), 256);
+      host_graph.data(), host_data.data(), host_data.data(), gt.data(), 128);
 }
+
+TEST(TestSearch, GpuSearchOneQueryTest) {
+  constexpr uint32_t dim = 128;
+  constexpr uint32_t degree = 64;
+  constexpr uint32_t base_num = 10000;
+  constexpr uint32_t query_num = 10000;
+  constexpr uint32_t gt_topk = 100;
+  constexpr uint32_t topk = 100;
+
+  auto host_graph = std::vector<uint32_t>(degree * base_num);
+  auto host_data = std::vector<float>(dim * base_num);
+  // auto host_query = std::vector<float>(query_num * dim);
+  auto gt = std::vector<uint32_t>(gt_topk * base_num);
+
+  auto graph_file_name =
+      "/home/shiwen/project/GGidxbuild/data/search_graph.bin";
+  auto data_file_name = "/home/shiwen/project/GGidxbuild/data/vectors.fbin";
+  auto gt_file_name = "/home/shiwen/project/GGidxbuild/data/groundtruth.ibin";
+
+  read_vec_from_file(host_graph, graph_file_name);
+  read_vec_from_file(host_data, data_file_name);
+  read_vec_from_file(gt, gt_file_name);
+
+  // print_vec(host_data);
+
+  // std::mt19937
+  // gen(std::chrono::system_clock::now().time_since_epoch().count());
+  // std::uniform_real_distribution<float> random_val(-1, 1);
+  // for (auto& elem : host_query) {
+  //   elem = random_val(gen);
+  // }
+
+  uint32_t* d_graph = nullptr;
+  float* d_base_data = nullptr;
+  uint32_t* d_result = nullptr;
+
+  // testSearch<query_num, base_num, dim, topk, gt_topk, degree, float,
+  // uint32_t>(
+  //     host_graph.data(), host_data.data(), host_data.data(), gt.data(), 128);
+
+  cudaMalloc(&d_graph, degree * base_num * sizeof(uint32_t));
+  cudaMalloc(&d_base_data, dim * base_num * sizeof(float));
+  cudaMalloc(&d_result, topk * base_num * sizeof(uint32_t));
+
+  cudaMemcpy(d_graph, host_graph.data(), degree * base_num * sizeof(uint32_t),
+             cudaMemcpyHostToDevice);
+  cudaMemcpy(d_base_data, host_data.data(), dim * base_num * sizeof(float),
+             cudaMemcpyHostToDevice);
+
+  constexpr uint32_t grid_size = 1;
+  constexpr uint32_t block_size = 32;
+  constexpr uint32_t Km = 128;
+  constexpr uint32_t Kp = 14;
+  constexpr uint32_t Kd = 64;
+  constexpr uint32_t shared_memory_size =
+      (block_size / 32) *
+      sizeof(search_warp_state<uint32_t, float, dim, Km, Kp, Kd, 1 << 12>);
+
+  enhance_search<grid_size, block_size, base_num, dim, degree,
+                 shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF, 1 << 12, 4,
+                 uint32_t, float>
+      <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_graph,
+                                                      d_result);
+
+  auto check_res = std::vector<uint32_t>(topk * base_num);
+  cudaMemcpy(check_res.data(), d_result, topk * base_num * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+
+  SPDLOG_INFO("the res of gt:");
+  for (auto i = 0; i < topk; i++) {
+    std::cout << gt[i] << "\n";
+  }
+  SPDLOG_INFO("the res of d_res:");
+  for (auto i = 0; i < topk; i++) {
+    std::cout << check_res[i] << "\n";
+  }
+}
+
 }  // namespace Gpu
 }  // namespace Gbuilder

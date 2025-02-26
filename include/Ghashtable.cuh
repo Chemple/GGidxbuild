@@ -21,6 +21,7 @@ struct HashTable {
     return key & (table_size - 1);
   }
 
+  // TODO(shiwen): discard this...
   __device__ __forceinline__ bool test_and_set(key_type const& key) {
     auto slot = hash(key);
     auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
@@ -32,6 +33,30 @@ struct HashTable {
       return true;
     }
     return false;
+  }
+
+  __device__ __forceinline__ bool warp_level_test_and_set(
+      key_type const& key, uint32_t const& lane_id) {
+    if (lane_id == 0) {
+      auto slot = hash(key);
+      // auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+      auto old_key = list_[slot];
+      if (old_key == Kempty) {
+        list_[slot] = key + 1;
+      }
+      while (old_key != Kempty && old_key != key + 1) {
+        slot = (slot + 1) & table_size;
+        // old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+        old_key = list_[slot];
+        if (old_key == Kempty) {
+          list_[slot] = key + 1;
+        }
+      }
+      if (old_key == Kempty) {
+        return true;
+      }
+      return false;
+    }
   }
 
   // NOTE(shiwen): for sync reset

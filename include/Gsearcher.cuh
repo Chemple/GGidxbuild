@@ -125,7 +125,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
   // Total amount of shared memory per block: 49152 bytes
   // NOTE(shiwen): use attribute to max the allocate of shared memory
   static_assert(shared_memory_size < 49152);
-  // the max degree must smaller than Kd.
+  // Kd must be smaller than max_degree
   static_assert(max_degree <= Kd);
   // the topk must be smaller than Km.
   static_assert(topk < Km);
@@ -147,17 +147,19 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
   HashTable<uint32_t, hash_table_size>* visit_table =
       warp_states[local_warp_id].visit_;
 
-  for (uint32_t query_id = global_warp_id; query_id < base_num; query_id++) {
+  // NOTE(shiwen): query num is base num.
+  for (uint32_t query_id = global_warp_id; query_id < base_num;
+       query_id += global_warp_num) {
     // Load base vector
     for (uint32_t i = lane_id; i < dim; i += lane_width) {
-      assert(i < dim);
       query_vector_sdata[i] = base_data[query_id * dim + i];
     }
 
-    // FIXME(shiwen): generate the random enter points.
-    // gen the enter points.
     for (uint32_t i = lane_id; i < Kp * Kd; i += lane_width) {
-      node_id_list_sdata[Km + i] = query_id + i;
+      // FIXME(shiwen): generate the random enter points.
+      // gen the enter points.
+      auto random_id = (query_id + i) % base_num;
+      node_id_list_sdata[Km + i] = random_id;
     }
     __syncwarp();
 
@@ -199,6 +201,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
     warp_sort<data_type, id_type, Km + Kp * Kd, lane_width>(
         node_distance_list_sdata, node_id_list_sdata, true);
 
+    // NOTE(shiwen): for hashtable reset.
     auto iter = 0;
 
     // FIXME(shiwen): change the condition?
@@ -206,13 +209,11 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
         node_id_list_sdata, node_id_list_sdata + Km, lane_id)) {
       // fill the explore id list.
       for (auto explore_idx = 0; explore_idx < Kp; explore_idx++) {
-        auto explore_id = node_id_list_sdata[explore_idx * Kd];
+        auto explore_id = node_id_list_sdata[Km + explore_idx * Kd];
         for (auto neighbor_idx = lane_id; neighbor_idx < Kd;
              neighbor_idx += lane_width) {
-          uint32_t neighbor_id = 0;
-          if (explore_id == tomb) {
-            neighbor_id = tomb;
-          } else {
+          uint32_t neighbor_id = tomb;
+          if (explore_id != tomb) {
             assert(explore_id < base_num);
             // NOTE(shiwen): coalesced memory access.
             // TODO(shiwen): is it necessary to load into shared memory? but
@@ -228,9 +229,12 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
       // query.2.the other is each thread in warp calculate one distance between
       // its node and query. now choose the method 1. need ncu to profile.
       for (auto list_idx = 0; list_idx < Kp * Kd; list_idx++) {
-        auto node_id = node_id_list_sdata[list_idx];
+        auto node_id = node_id_list_sdata[Km + list_idx];
         uint32_t node_distance = FLT_MAX;
-        if (node_id != tomb && visit_table->test_and_set(node_id)) {
+        // NOTE(shiwen): in method1, there is no thread conflit when accessing
+        // hash table.
+        if (node_id != tomb &&
+            visit_table->warp_level_test_and_set(node_id, lane_id)) {
           for (uint32_t i = lane_id; i < dim; i += lane_width) {
             assert(node_id < base_num);
             list_vector_sdata[i] = base_data[node_id * dim + i];
@@ -248,12 +252,12 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
           __syncwarp();
 
           if (lane_id == 0) {
-            node_distance_list_sdata[list_idx] = -sum;
+            node_distance_list_sdata[Km + list_idx] = -sum;
           }
           __syncwarp();
         } else {
           if (lane_id == 0) {
-            node_distance_list_sdata[list_idx] = FLT_MAX;
+            node_distance_list_sdata[Km + list_idx] = FLT_MAX;
           }
         }
       }
