@@ -1,5 +1,6 @@
 #include "Gsearcher.cuh"
 #include "spdlog/spdlog.h"
+#include "utils.hpp"
 #include <gtest/gtest.h>
 #include <cstdint>
 #include <cstdio>
@@ -20,7 +21,7 @@ namespace Gpu {
 TEST(TestSearch, SizeTest) {
   SPDLOG_INFO(
       "the size is {}",
-      sizeof(search_warp_state<uint32_t, float, 128, 128, 14, 64, 1 << 12>));
+      sizeof(search_warp_state<uint32_t, float, 128, 128, 6, 64, 1 << 11>));
 }
 
 template <uint32_t Km = 128, uint32_t Kp = 14, uint32_t Kd = 64,
@@ -235,7 +236,7 @@ TEST(TestSearch, TestSearch) {
   constexpr uint32_t dim = 128;
   constexpr uint32_t degree = 64;
   constexpr uint32_t base_num = 10000;
-  constexpr uint32_t query_num = 10000;
+  constexpr uint32_t query_num = 10;
   constexpr uint32_t gt_topk = 100;
   constexpr uint32_t topk = 100;
 
@@ -276,7 +277,7 @@ TEST(TestSearch, GpuSearchOneQueryTest) {
   constexpr uint32_t base_num = 10000;
   constexpr uint32_t query_num = 10000;
   constexpr uint32_t gt_topk = 100;
-  constexpr uint32_t topk = 100;
+  constexpr uint32_t topk = 10;
 
   auto host_graph = std::vector<uint32_t>(degree * base_num);
   auto host_data = std::vector<float>(dim * base_num);
@@ -318,33 +319,50 @@ TEST(TestSearch, GpuSearchOneQueryTest) {
   cudaMemcpy(d_base_data, host_data.data(), dim * base_num * sizeof(float),
              cudaMemcpyHostToDevice);
 
-  constexpr uint32_t grid_size = 1;
+  constexpr uint32_t grid_size = 72;
   constexpr uint32_t block_size = 32;
   constexpr uint32_t Km = 128;
-  constexpr uint32_t Kp = 14;
+  constexpr uint32_t Kp = 6;
   constexpr uint32_t Kd = 64;
   constexpr uint32_t shared_memory_size =
       (block_size / 32) *
-      sizeof(search_warp_state<uint32_t, float, dim, Km, Kp, Kd, 1 << 12>);
+      sizeof(search_warp_state<uint32_t, float, dim, Km, Kp, Kd, 1 << 11>);
 
+  auto carveout = 60;
+  cudaFuncSetAttribute(
+      enhance_search<grid_size, block_size, base_num, dim, degree,
+                     shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF, 1 << 11,
+                     4, uint32_t, float>,
+      cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
+  cudaCheckError();
   enhance_search<grid_size, block_size, base_num, dim, degree,
-                 shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF, 1 << 12, 4,
+                 shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF, 1 << 11, 4,
                  uint32_t, float>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_graph,
                                                       d_result);
+
+  cudaCheckError();
 
   auto check_res = std::vector<uint32_t>(topk * base_num);
   cudaMemcpy(check_res.data(), d_result, topk * base_num * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
 
-  SPDLOG_INFO("the res of gt:");
-  for (auto i = 0; i < topk; i++) {
-    std::cout << gt[i] << "\n";
+  cudaCheckError();
+
+  uint32_t hit = 0;
+  for (auto i = 0; i < base_num; i++) {
+    auto hash_table = std::unordered_set<uint32_t>{};
+    for (auto j = 0; j < topk; j++) {
+      hash_table.insert(check_res[i * topk + j]);
+    }
+    for (auto j = 0; j < topk; j++) {
+      if (hash_table.find(gt[i * gt_topk + j]) != hash_table.end()) {
+        hit++;
+      }
+    }
   }
-  SPDLOG_INFO("the res of d_res:");
-  for (auto i = 0; i < topk; i++) {
-    std::cout << check_res[i] << "\n";
-  }
+  auto final_recall = 1.0 * hit / (base_num * topk);
+  SPDLOG_INFO("the recall is {}", final_recall);
 }
 
 }  // namespace Gpu

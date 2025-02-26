@@ -14,8 +14,8 @@ namespace Gbuilder {
 namespace Gpu {
 
 template <typename id_type = uint32_t, typename data_type = float,
-          uint32_t dim = 128, uint32_t Km = 32, uint32_t Kp = 8,
-          uint32_t Kd = 16, uint32_t hash_table_size = 1 << 12>
+          uint32_t dim = 128, uint32_t Km = 128, uint32_t Kp = 6,
+          uint32_t Kd = 64, uint32_t hash_table_size = 1 << 11>
 struct search_warp_state {
   data_type query_vector_[dim];
   data_type list_vector_[dim];
@@ -35,14 +35,16 @@ __device__ __forceinline__ void set_to_parent(uint32_t& raw_node_id) {
 }
 
 // NOTE(shiwen): this only work when Km <=32
-template <uint32_t Km = 128, uint32_t Kp = 14, uint32_t Kd = 64,
+template <uint32_t Km = 128, uint32_t Kp = 6, uint32_t Kd = 64,
           typename id_type = uint32_t, typename data_type = float,
           uint32_t tomb = 0XFFFFFFFF>
 __device__ __forceinline__ bool collect_top_p(
     id_type* __restrict__ topm_ids, id_type* __restrict__ candidate_ids,
     uint32_t const& lane_id) {
+  // FIXME(shiwen): use cudaFuncSetAttribute(MyKernel,
+  // cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
   // NOTE(shiwen): Kp must be smaller than lane_width.
-  static_assert(Km <= 32);
+  // static_assert(Km <= 32);
   static_assert(Kp < 32);
   id_type id = topm_ids[lane_id];
   bool is_valid = (id & 0x80000000) == 0;
@@ -70,7 +72,7 @@ __device__ __forceinline__ bool collect_top_p(
   return explore_flag;
 }
 
-template <uint32_t Km = 128, uint32_t Kp = 14, uint32_t Kd = 64,
+template <uint32_t Km = 128, uint32_t Kp = 6, uint32_t Kd = 64,
           typename id_type = uint32_t, typename data_type = float,
           uint32_t tomb = 0XFFFFFFFF>
 __device__ __forceinline__ bool collect_top_p_normal(
@@ -105,16 +107,16 @@ __device__ __forceinline__ bool collect_top_p_normal(
 
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t dim, uint32_t max_degree, uint32_t shared_memory_size,
-          uint32_t Km = 128, uint32_t Kp = 14, uint32_t Kd = 64, uint32_t topk,
-          uint32_t tomb = 0XFFFFFFFF, uint32_t hash_table_size = 1 << 12,
+          uint32_t Km = 128, uint32_t Kp = 6, uint32_t Kd = 64, uint32_t topk,
+          uint32_t tomb = 0XFFFFFFFF, uint32_t hash_table_size = 1 << 11,
           uint32_t reset_iter = 4, typename id_type = uint32_t,
           typename data_type = float>
 __global__ void enhance_search(data_type* base_data, id_type* graph,
                                id_type* result) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
-  constexpr uint32_t shared_memory_size_per_warp =
-      sizeof(search_warp_state<id_type, data_type, dim, Km, Kp, Kd>);
+  constexpr uint32_t shared_memory_size_per_warp = sizeof(
+      search_warp_state<id_type, data_type, dim, Km, Kp, Kd, hash_table_size>);
   constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
 
   // for 1-bit parented node management.
@@ -145,7 +147,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
   data_type* node_distance_list_sdata =
       warp_states[local_warp_id].node_distance_list_;
   HashTable<uint32_t, hash_table_size>* visit_table =
-      warp_states[local_warp_id].visit_;
+      &warp_states[local_warp_id].visit_;
 
   // NOTE(shiwen): query num is base num.
   for (uint32_t query_id = global_warp_id; query_id < base_num;
@@ -230,7 +232,7 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
       // its node and query. now choose the method 1. need ncu to profile.
       for (auto list_idx = 0; list_idx < Kp * Kd; list_idx++) {
         auto node_id = node_id_list_sdata[Km + list_idx];
-        uint32_t node_distance = FLT_MAX;
+        data_type node_distance = FLT_MAX;
         // NOTE(shiwen): in method1, there is no thread conflit when accessing
         // hash table.
         if (node_id != tomb &&
@@ -276,7 +278,8 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
     // write to result
     for (auto res_idx = lane_id; res_idx < topk; res_idx += lane_width) {
       assert(query_id < base_num);
-      result[query_id * topk + res_idx] = node_id_list_sdata[res_idx];
+      result[query_id * topk + res_idx] =
+          (node_id_list_sdata[res_idx] & 0X7FFFFFFF);
     }
   }
 }
