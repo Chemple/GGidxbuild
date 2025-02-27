@@ -10,7 +10,7 @@
 
 namespace Gbuilder {
 namespace Gpu {
-template <typename key_type = uint32_t, uint32_t table_size = 1 << 12>
+template <typename key_type = uint32_t, uint32_t table_size = 1 << 11>
 struct HashTable {
   // NOTE(shiwen): the key start at 1. Empty is 0.
   key_type list_[table_size];
@@ -26,7 +26,7 @@ struct HashTable {
     auto slot = hash(key);
     auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
     while (old_key != Kempty && old_key != key + 1) {
-      slot = (slot + 1) & table_size;
+      slot = (slot + 1) & (table_size - 1);
       old_key = atomicCAS(&list_[slot], Kempty, key + 1);
     }
     if (old_key == Kempty) {
@@ -56,10 +56,24 @@ struct HashTable {
       }
       if (old_key == Kempty) {
         res = true;
+      } else {
+        res = false;
       }
-      res = false;
     }
     return __shfl_sync(0XFFFFFFFF, res, 0);
+  }
+
+  __device__ __forceinline__ bool thread_level_set(key_type const& key) {
+    auto slot = hash(key);
+    auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+    while (old_key != Kempty && old_key != key + 1) {
+      slot = (slot + 1) & (table_size - 1);
+      old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+    }
+    if (old_key == Kempty) {
+      return true;
+    }
+    return false;
   }
 
   // NOTE(shiwen): for sync reset
@@ -67,15 +81,15 @@ struct HashTable {
     // FIXME(shiwen): maybe other cuda API..?
     constexpr uint32_t lane_width = 32;
     for (auto i = lane_id; i < table_size; i += lane_width) {
-      list_[i] = 0;
+      list_[i] = Kempty;
     }
   }
 
-  // NOTE(shiwen): for async reset
-  __device__ __forceinline__ bool reset_async() {}
+  // // NOTE(shiwen): for async reset
+  // __device__ __forceinline__ bool reset_async() {}
 
-  // NOTE(shiwen): barrier
-  __device__ __forceinline__ bool sync() {}
+  // // NOTE(shiwen): barrier
+  // __device__ __forceinline__ bool sync() {}
 };
 }  // namespace Gpu
 }  // namespace Gbuilder

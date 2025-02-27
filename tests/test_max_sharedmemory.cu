@@ -35,26 +35,28 @@ __global__ void testKernel() {
 
 TEST(TestMaxSharedMemory, test) {
   constexpr auto max_shared_memory_size = 49152;
+  constexpr auto test_shared_memory_size = 53248;
   constexpr auto grid_size = 72;
   constexpr auto block_size = 256;
 
-  // cudaFuncSetCacheConfig(
-  //     testKernel<grid_size, block_size, max_shared_memory_size>,
-  //     cudaFuncCachePreferShared);
-  // cudaCheckError();
+  cudaFuncSetCacheConfig(
+      testKernel<grid_size, block_size, test_shared_memory_size>,
+      cudaFuncCachePreferShared);
+  cudaCheckError();
 
-  int32_t query_size = 0;
-
-  // 查询设备支持的每块最大共享内存
-  cudaDeviceGetAttribute(&query_size, cudaDevAttrMaxSharedMemoryPerBlock, 0);
-
-  SPDLOG_INFO("the max shared memory size is {}", query_size);
+  cudaFuncSetAttribute(
+      testKernel<grid_size, block_size, test_shared_memory_size>,
+      cudaFuncAttributeMaxDynamicSharedMemorySize, cudaFuncCachePreferShared);
 
   cudaCheckError();
 
+  SPDLOG_INFO("the test shared memory size is {}", test_shared_memory_size);
+
   // 启动kernel，指定共享内存大小
-  testKernel<grid_size, block_size, max_shared_memory_size>
-      <<<grid_size, block_size, max_shared_memory_size>>>();
+  testKernel<grid_size, block_size, test_shared_memory_size>
+      <<<grid_size, block_size, test_shared_memory_size>>>();
+
+  cudaCheckError();
 
   cudaDeviceSynchronize();
 }

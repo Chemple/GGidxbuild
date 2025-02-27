@@ -111,8 +111,8 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t Kd = 64, uint32_t topk, uint32_t tomb = 0XFFFFFFFF,
           uint32_t hash_table_size = 1 << 11, uint32_t reset_iter = 4,
           typename id_type = uint32_t, typename data_type = float>
-__global__ void enhance_search(data_type* base_data, id_type* graph,
-                               id_type* result) {
+__global__ void enhance_search(data_type* base_data, data_type* query_data,
+                               id_type* graph, id_type* result) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
   constexpr uint32_t shared_memory_size_per_warp = sizeof(
@@ -124,11 +124,13 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
   // for shared_memory size calculation.
   static_assert(shared_memory_size ==
                 shared_memory_size_per_warp * warp_per_block);
+
   // Total amount of shared memory per block: 49152 bytes
   // NOTE(shiwen): use attribute to max the allocate of shared memory
-  static_assert(shared_memory_size < 49152);
+  // static_assert(shared_memory_size < 49152);
+
   // Kd must be smaller than max_degree
-  static_assert(max_degree <= Kd);
+  static_assert(Kd <= max_degree);
   // the topk must be smaller than Km.
   static_assert(topk <= Km + Kp * Kd);
 
@@ -154,13 +156,13 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
        query_id += global_warp_num) {
     // Load base vector
     for (uint32_t i = lane_id; i < dim; i += lane_width) {
-      query_vector_sdata[i] = base_data[query_id * dim + i];
+      query_vector_sdata[i] = query_data[query_id * dim + i];
     }
 
     for (uint32_t i = lane_id; i < Kp * Kd; i += lane_width) {
       // FIXME(shiwen): generate the random enter points.
       // gen the enter points.
-      auto random_id = (query_id + i) % base_num;
+      auto random_id = (3030517 + i) % base_num;
       node_id_list_sdata[Km + i] = random_id;
     }
     __syncwarp();
@@ -202,6 +204,10 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
     // FIXME(shiwen): Km + Kp * Kd must be 2^n
     warp_sort<data_type, id_type, Km + Kp * Kd, lane_width>(
         node_distance_list_sdata, node_id_list_sdata, true);
+
+    for (auto list_idx = lane_id; list_idx < Km; list_idx += lane_width) {
+      visit_table->thread_level_set(node_id_list_sdata[list_idx] & 0X7FFFFFFF);
+    }
 
     // NOTE(shiwen): for hashtable reset.
     auto iter = 0;
@@ -271,6 +277,10 @@ __global__ void enhance_search(data_type* base_data, id_type* graph,
       iter++;
       if (iter == reset_iter) {
         visit_table->reset_sync(lane_id);
+        for (auto list_idx = lane_id; list_idx < Km; list_idx += lane_width) {
+          visit_table->thread_level_set(node_id_list_sdata[list_idx] &
+                                        0X7FFFFFFF);
+        }
         iter = 0;
       }
     }
