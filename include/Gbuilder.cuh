@@ -69,6 +69,36 @@ __global__ void match_kernel(id_type const* __restrict__ gt_ids,
   }
 }
 
+// NOTE(shiwen): just for match top1.
+template <uint32_t grid_size, uint32_t block_size, uint32_t query_num,
+          uint32_t topk, uint32_t max_degree, uint32_t tomb = 0xFFFFFFFF,
+          typename data_type = float, typename id_type = uint32_t>
+__global__ void match_top1_kernel(id_type const* __restrict__ gt_ids,
+                                  id_type* __restrict__ top1_match_graph) {
+  // NOTE(shiwen): max_degree is same as topk.
+  static_assert(max_degree == topk - 1);
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+
+  // TODO(shiwen): use shared memory.
+  for (auto query_idx = thread_idx; query_idx < query_num;
+       query_idx += stride) {
+    auto top1_base_id = gt_ids[query_idx * topk];
+    auto gt_idx = 1;
+    auto neighbor_base_id = gt_ids[query_idx * topk + gt_idx];
+    // top1 match
+    if (atomicCAS(&top1_match_graph[top1_base_id * max_degree], tomb,
+                  neighbor_base_id) == tomb) {
+      for (gt_idx = 2; gt_idx < topk; gt_idx++) {
+        neighbor_base_id = gt_ids[query_idx * topk + gt_idx];
+        auto neighbor_idx = gt_idx - 1;
+        top1_match_graph[top1_base_id * max_degree + neighbor_idx] =
+            neighbor_base_id;
+      }
+    }
+  }
+}
+
 // // each warp is assigned to calculate all the distance between base_vector_id
 // // and its neighbor.
 // template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
@@ -200,13 +230,13 @@ __global__ void compute_and_sort_ip_distance_kernel(
       assert(i < dim);
       base_vector_sdata[i] = base_data[base_vector_id * dim + i];
     }
-    __syncwarp();
+    // __syncwarp();
 
     uint32_t min_invalid_neighbor_idx = max_in_degree;
     // Process neighbors and collect distances
     for (uint32_t neighbor_idx = 0; neighbor_idx < max_in_degree;
          ++neighbor_idx) {
-      __syncwarp();
+      // __syncwarp();
       assert(neighbor_idx < max_in_degree);
       assert(base_vector_id < base_num);
 
@@ -214,7 +244,7 @@ __global__ void compute_and_sort_ip_distance_kernel(
           graph[base_vector_id * max_in_degree + neighbor_idx];
 
       assert(neighbor_id < base_num);
-      __syncwarp();
+      // __syncwarp();
 
       if (neighbor_id == tomb) {
         min_invalid_neighbor_idx = neighbor_idx;
@@ -226,7 +256,7 @@ __global__ void compute_and_sort_ip_distance_kernel(
             distance_sdata[neighbor_idx] = FLT_MAX;
           }
         }
-        __syncwarp();
+        // __syncwarp();
 
         break;
       }
@@ -238,7 +268,7 @@ __global__ void compute_and_sort_ip_distance_kernel(
 
         neighbor_vector_sdata[i] = base_data[neighbor_id * dim + i];
       }
-      __syncwarp();
+      // __syncwarp();
 
       data_type sum = 0;
       for (uint32_t i = lane_id; i < dim; i += lane_width) {
@@ -249,7 +279,7 @@ __global__ void compute_and_sort_ip_distance_kernel(
       for (int offset = 16; offset > 0; offset >>= 1) {
         sum += __shfl_down_sync(0xffffffff, sum, offset);
       }
-      __syncwarp();
+      // __syncwarp();
 
       if (lane_id == 0) {
         assert(neighbor_idx < max_in_degree);
@@ -259,13 +289,13 @@ __global__ void compute_and_sort_ip_distance_kernel(
       __syncwarp();
     }
 
-    __syncwarp();
+    // __syncwarp();
 
     // FIXME(shiwen): check the 3rd template.
     warp_sort<data_type, id_type, max_in_degree, lane_width>(
         distance_sdata, neighbor_id_sdata, true);
 
-    __syncwarp();
+    // __syncwarp();
 
     for (uint32_t i = lane_id; i < max_in_degree; i += lane_width) {
       assert(i < max_in_degree);
