@@ -213,25 +213,6 @@ TEST(TestSearch, TestSelectTopPSimple) {
   ASSERT_EQ(host_list, check_host_list);
 }
 
-template <typename vec_type>
-bool read_vec_from_file(std::vector<vec_type>& vec, char const* file_path) {
-  if (std::filesystem::exists(file_path)) {
-    std::ifstream file(file_path, std::ios::binary);
-    if (file.is_open()) {
-      file.read(reinterpret_cast<char*>(vec.data()),
-                vec.size() * sizeof(vec_type));
-      file.close();
-      SPDLOG_INFO("loaded from file: {}", file_path);
-      return true;
-    } else {
-      SPDLOG_ERROR("Failed to open file: {}", file_path);
-      return false;
-    }
-  }
-  SPDLOG_ERROR("file is not exist: {}", file_path);
-  return false;
-}
-
 TEST(TestSearch, DISABLED_TestSearch) {
   constexpr uint32_t dim = 128;
   constexpr uint32_t degree = 64;
@@ -659,6 +640,7 @@ TEST(TestSearch, GpuEnhanceLink) {
   constexpr uint32_t topk = Km + Kp * Kd;
   constexpr uint32_t reset_iter = 15;
   constexpr uint32_t hashtable_size = 1 << 12;
+  // constexpr uint32_t enter_points_num = 32;
   constexpr uint32_t shared_memory_size =
       (block_size / 32) *
       sizeof(
@@ -670,6 +652,11 @@ TEST(TestSearch, GpuEnhanceLink) {
 
   auto host_graph = std::vector<uint32_t>(degree * base_num);
   auto host_data = std::vector<float>(dim * base_num);
+  // auto host_enter_points = std::vector<uint32_t>{
+  //     2012672, 7674849, 2893711, 486935,  7986468, 7933463, 7090302, 5363700,
+  //     8521398, 8020705, 2131068, 210296,  5604224, 8438516, 9157492, 7712070,
+  //     8606321, 2964402, 607245,  891451,  7541619, 7346750, 9483882, 5002848,
+  //     2584507, 4178468, 4158995, 1187799, 8454013, 2316098, 675530, 7059504};
   // auto host_query = std::vector<float>(dim * query_num);
   // auto host_query = std::vector<float>(query_num * dim);
   // auto gt = std::vector<uint32_t>(gt_topk * base_num);
@@ -701,6 +688,7 @@ TEST(TestSearch, GpuEnhanceLink) {
   // float* d_query_data = nullptr;
   uint32_t* d_result = nullptr;
   HashTable<uint32_t, 1 << 12>* d_hashtables = nullptr;
+  // uint32_t* d_enterpoints = nullptr;
   // float* d_distance = nullptr;
 
   // testSearch<query_num, base_num, dim, topk, gt_topk, degree, float,
@@ -714,12 +702,15 @@ TEST(TestSearch, GpuEnhanceLink) {
   cudaMalloc(&d_result, topk * base_num * sizeof(uint32_t));
   cudaMalloc(&d_hashtables,
              global_warp_num * hashtable_size * sizeof(uint32_t));
+  // cudaMalloc(&d_enterpoints, enter_points_num * sizeof(uint32_t));
   // cudaMalloc(&d_distance, Km * base_num * sizeof(float));
 
   cudaMemcpy(d_graph, host_graph.data(), degree * base_num * sizeof(uint32_t),
              cudaMemcpyHostToDevice);
   cudaMemcpy(d_base_data, host_data.data(), dim * base_num * sizeof(float),
              cudaMemcpyHostToDevice);
+  // cudaMemcpy(d_enterpoints, host_enter_points.data(),
+  //            enter_points_num * sizeof(uint32_t), cudaMemcpyHostToDevice);
   // cudaMemcpy(d_query_data, host_query.data(), dim * query_num *
   // sizeof(float),
   //            cudaMemcpyHostToDevice);
@@ -753,6 +744,9 @@ TEST(TestSearch, GpuEnhanceLink) {
   //            Km * base_num * sizeof(uint32_t), cudaMemcpyDeviceToHost);
 
   cudaCheckError();
+
+  dump_vec2_file(check_res,
+                 "/home/shiwen/project/GGidxbuild/data/gpu_search_res.ibin");
 
   // uint32_t hit = 0;
   // for (auto i = 0; i < query_num; i++) {

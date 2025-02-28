@@ -507,7 +507,7 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           typename data_type = float>
 __global__ void link_process_global_hashtable(
     data_type* base_data, HashTable<uint32_t, 1 << 12>* hash_tables,
-    id_type* graph, id_type* result) {
+    id_type* graph, id_type* result /*, id_type* enter_points*/) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
   constexpr uint32_t shared_memory_size_per_warp = sizeof(
@@ -522,7 +522,7 @@ __global__ void link_process_global_hashtable(
 
   // Total amount of shared memory per block: 49152 bytes
   // NOTE(shiwen): use attribute to max the allocate of shared memory
-  // static_assert(shared_memory_size < 49152);
+  static_assert(shared_memory_size < 49152);
 
   // Kd must be smaller than max_degree
   static_assert(Kd <= max_degree);
