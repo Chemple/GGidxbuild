@@ -230,11 +230,11 @@ void init_base_data(std::vector<float>& base_data, uint32_t dim,
 
 TEST(compute_test, allvalidtest) {
   omp_set_num_threads(64);
-  constexpr uint32_t base_number = 1024 * 1024 * 10;
-  constexpr uint32_t degree = 64;
-  constexpr uint32_t dim = 128;
+  constexpr uint32_t base_number = 10 * 1000 * 1000;
+  constexpr uint32_t degree = 128;
+  constexpr uint32_t dim = 200;
   constexpr uint32_t grid_size = 72 * 2;
-  constexpr uint32_t block_size = 512;
+  constexpr uint32_t block_size = 256;
   constexpr uint32_t share_memory_size =
       sizeof(compute_sort_warp_state<uint32_t, float, degree, dim>) *
       block_size / 32;

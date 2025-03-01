@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace Gbuilder {
@@ -382,6 +383,220 @@ __global__ void rng_prune_kernel(
         }
       }
     }
+    // TODO(shiwen): slight RNG prune?
+  }
+}
+
+// from_node_id -> to_node_id
+template <typename id_type = uint32_t, uint32_t reverse_graph_degree,
+          uint32_t reverse_graph_max_neighbor>
+__device__ __forceinline__ void add_to_reverse_graph_thread_level(
+    id_type const& from_node_id, id_type const& to_node_id,
+    id_type* reverse_graph) {
+  auto loc = atomicAdd(&reverse_graph[from_node_id * reverse_graph_degree], 1);
+  // naive cut off
+  if (loc < reverse_graph_max_neighbor) {
+    reverse_graph[from_node_id * reverse_graph_degree + loc] = to_node_id;
+  }
+}
+
+template <typename data_type = float, typename id_type = uint32_t, uint32_t dim,
+          uint32_t base_num>
+__device__ __forceinline__ data_type
+distance_between(id_type const& x_id, id_type const& y_id,
+                 data_type const* __restrict__ base_data) {
+  data_type sum = 0;
+  for (auto i = 0; i < dim; i++) {
+    auto x_value = base_data[x_id * dim + i];
+    auto y_value = base_data[y_id * dim + i];
+    sum += x_value * y_value;
+  }
+  return -sum;
+}
+
+// NOTE(shiwen): init value: 1. the first element of each row of reverse graph
+// is set to 1(first insert location). 2.the first element of each row of prune
+// graph is set to 0(init number of prune number)
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t origin_graph_degree, uint32_t prune_graph_degree,
+          uint32_t reverse_graph_degree, uint32_t tomb = 0xFFFFFFFF,
+          uint32_t dim, bool is_strict = true, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void rng_prune_and_add_reverse_kernel(
+    data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
+    id_type* __restrict__ reverse_graph, id_type* __restrict__ pruned_graph) {
+  constexpr auto reverse_graph_max_neighbor =
+      prune_graph_degree - origin_graph_degree;
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+  // choose this strategy: if we add one edge to the prune graph, we add the
+  // reverse edge to the reverse graph immediately.
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    // insert base id of the first neighbor first.
+    auto neighbor_idx = 0;
+    assert(neighbor_idx < origin_graph_degree);
+    auto neighbor_base_id = graph[base_id * origin_graph_degree + neighbor_idx];
+    if (neighbor_base_id == tomb) {
+      continue;
+    }
+    // start at the second place because the first place of each row is set to
+    // num of neighbor.
+    auto pruned_graph_neighbor_idx = 1;
+    assert(neighbor_base_id < base_num);
+    assert(pruned_graph_neighbor_idx < prune_graph_degree);
+    pruned_graph[base_id * prune_graph_degree + pruned_graph_neighbor_idx] =
+        neighbor_base_id;
+    add_to_reverse_graph_thread_level<id_type, reverse_graph_degree,
+                                      reverse_graph_max_neighbor>(
+        neighbor_base_id, base_id, reverse_graph);
+    neighbor_idx++;
+    auto explore_flag = true;
+    for (; (explore_flag && neighbor_idx < origin_graph_degree);
+         neighbor_idx++) {
+      assert(neighbor_idx < origin_graph_degree);
+      neighbor_base_id = graph[base_id * origin_graph_degree + neighbor_idx];
+      if (neighbor_base_id == tomb) {
+        break;
+      }
+      auto compare_idx = 1;
+      for (; compare_idx <= pruned_graph_neighbor_idx; compare_idx++) {
+        assert(compare_idx < prune_graph_degree);
+        auto compare_base_id =
+            pruned_graph[base_id * prune_graph_degree + compare_idx];
+        assert(compare_base_id != tomb);
+        data_type compare_distance =
+            distance_between<float, uint32_t, dim, base_num>(
+                neighbor_base_id, compare_base_id, base_data);
+        data_type neighbor_distance =
+            distance_between<float, uint32_t, dim, base_num>(
+                neighbor_base_id, base_id, base_data);
+        assert(neighbor_idx < graph_max_in_degree);
+        if (compare_distance < neighbor_distance) {
+          break;
+        }
+      }
+      // pass all the distance tests.
+      if (compare_idx > pruned_graph_neighbor_idx) {
+        pruned_graph_neighbor_idx++;
+        // NOTE(shiwen):
+        assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
+        assert(base_id != neighbor_base_id);
+        pruned_graph[base_id * prune_graph_degree + pruned_graph_neighbor_idx] =
+            neighbor_base_id;
+        add_to_reverse_graph_thread_level<id_type, reverse_graph_degree,
+                                          reverse_graph_max_neighbor>(
+            neighbor_base_id, base_id, reverse_graph);
+        if (pruned_graph_neighbor_idx == prune_graph_degree - 1) {
+          explore_flag = false;
+          break;
+        }
+      }
+    }
+    // set neighbor number.
+    pruned_graph[base_id * prune_graph_degree] = pruned_graph_neighbor_idx;
+    // TODO(shiwen): slight RNG prune?
+  }
+}
+
+// NOTE(shiwen): set the first element of each row of prune graph to 0(init
+// number of prune number)
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t prune_graph_degree, uint32_t reverse_graph_degree,
+          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = true,
+          typename data_type = float, typename id_type = uint32_t>
+__global__ void merge_prune_graph_to_reverse_graph_kernel(
+    data_type const* __restrict__ base_data,
+    id_type* __restrict__ reverse_graph, id_type* __restrict__ pruned_graph) {
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+  // choose this strategy: if we add one edge to the prune graph, we add the
+  // reverse edge to the reverse graph immediately.
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    auto loc = reverse_graph[base_id * reverse_graph_degree];
+    auto prune_graph_neighbor_num = pruned_graph[base_id * prune_graph_degree];
+    // NOTE(shiwen): for subsequent operations.
+    reverse_graph[base_id * reverse_graph_degree] =
+        loc + prune_graph_neighbor_num;
+    assert(loc + prune_graph_neighbor_num <= reverse_graph_degree);
+    // NOTE(shiwen): for prune graph reuse.
+    pruned_graph[base_id * prune_graph_degree] = 0;
+    for (auto merge_idx = 0; merge_idx < prune_graph_neighbor_num;
+         merge_idx++) {
+      reverse_graph[base_id * prune_graph_degree + loc + merge_idx] =
+          pruned_graph[merge_idx];
+    }
+  }
+}
+
+// NOTE(shiwen): set the first element of each row of prune graph to 1(init
+// number of reverse number)
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t merge_graph_degree, uint32_t final_graph_degree,
+          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = true,
+          typename data_type = float, typename id_type = uint32_t>
+__global__ void prune_merge_graph(data_type const* __restrict__ base_data,
+                                  id_type* __restrict__ merge_graph,
+                                  id_type* __restrict__ final_graph) {
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    auto neighbor_num = merge_graph[base_id * merge_graph_degree] - 1;
+    if (neighbor_num == 0) {
+      // merge_graph[base_id * merge_graph_degree] = 1;
+      continue;
+    }
+    // insert base id of the first neighbor first.
+    auto neighbor_idx = 1;
+    auto neighbor_base_id =
+        merge_graph[base_id * merge_graph_degree + neighbor_idx];
+    // start at 0, final graph.
+    auto final_graph_neighbor_idx = 0;
+    assert(neighbor_base_id < base_num);
+    assert(final_graph_neighbor_idx < final_graph_degree);
+    final_graph[base_id * final_graph_degree + final_graph_neighbor_idx] =
+        neighbor_base_id;
+    neighbor_idx++;
+    auto explore_flag = true;
+    // FIXME(shiwen): this condition...
+    for (; (explore_flag && neighbor_idx < neighbor_num + 1); neighbor_idx++) {
+      assert(neighbor_idx < merge_graph_degree);
+      neighbor_base_id =
+          merge_graph[base_id * merge_graph_degree + neighbor_idx];
+      // in this setting, neighbor_base_id should not be tomb.
+      assert(neighbor_base_id < base_num);
+      auto compare_idx = 0;
+      for (; compare_idx <= final_graph_neighbor_idx; compare_idx++) {
+        assert(compare_idx < final_graph_degree);
+        auto compare_base_id =
+            final_graph[base_id * final_graph_degree + compare_idx];
+        assert(compare_base_id != tomb);
+        data_type compare_distance =
+            distance_between<float, uint32_t, dim, base_num>(
+                neighbor_base_id, compare_base_id, base_data);
+        data_type neighbor_distance =
+            distance_between<float, uint32_t, dim, base_num>(
+                neighbor_base_id, base_id, base_data);
+        if (compare_distance < neighbor_distance) {
+          break;
+        }
+      }
+      // pass all the distance tests.
+      if (compare_idx > final_graph_neighbor_idx) {
+        final_graph_neighbor_idx++;
+        // NOTE(shiwen):
+        assert(final_graph_neighbor_idx < final_graph_degree);
+        assert(base_id != neighbor_base_id);
+        final_graph[base_id * final_graph_degree + final_graph_neighbor_idx] =
+            neighbor_base_id;
+        if (final_graph_neighbor_idx == final_graph_degree - 1) {
+          explore_flag = false;
+          break;
+        }
+      }
+    }
+    // for  reuse of reverse graph.
+    merge_graph[base_id * merge_graph_degree] = 1;
     // TODO(shiwen): slight RNG prune?
   }
 }
