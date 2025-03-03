@@ -640,7 +640,7 @@ __global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
 
     // __syncwarp();
 
-    for (uint32_t i = lane_id; i < valid_num - 1; i += lane_width) {
+    for (uint32_t i = lane_id; i < valid_num; i += lane_width) {
       reverse_graph[base_vector_id * reverse_graph_degree + i] =
           neighbor_id_sdata[i];
     }
@@ -962,13 +962,16 @@ __global__ void prune_merge_graph_without_distance(
 
   for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
     auto neighbor_num =
-        merge_graph[base_id * merge_graph_degree + merge_graph_degree - 1] - 1;
+        merge_graph[base_id * merge_graph_degree + merge_graph_degree - 1];
     if (neighbor_num == 0) {
       // merge_graph[base_id * merge_graph_degree] = 1;
+      for (auto i = 0; i < final_graph_degree; i++) {
+        final_graph[base_id * final_graph_degree + i] = tomb;
+      }
       continue;
     }
     // insert base id of the first neighbor first.
-    auto neighbor_idx = 1;
+    auto neighbor_idx = 0;
     auto neighbor_base_id =
         merge_graph[base_id * merge_graph_degree + neighbor_idx];
     // start at 0, final graph.
@@ -980,7 +983,7 @@ __global__ void prune_merge_graph_without_distance(
     neighbor_idx++;
     auto explore_flag = true;
     // FIXME(shiwen): this condition...
-    for (; (explore_flag && neighbor_idx < neighbor_num + 1); neighbor_idx++) {
+    for (; (explore_flag && neighbor_idx < neighbor_num); neighbor_idx++) {
       assert(neighbor_idx < merge_graph_degree);
       neighbor_base_id =
           merge_graph[base_id * merge_graph_degree + neighbor_idx];
@@ -1016,8 +1019,11 @@ __global__ void prune_merge_graph_without_distance(
         }
       }
     }
+    for (auto i = final_graph_neighbor_idx + 1; i < final_graph_degree; i++) {
+      final_graph[base_id * final_graph_degree + i] = tomb;
+    }
     // for  reuse of reverse graph.
-    merge_graph[base_id * merge_graph_degree] = 1;
+    merge_graph[base_id * merge_graph_degree] = 0;
     // TODO(shiwen): slight RNG prune?
   }
 }

@@ -111,9 +111,9 @@ TEST(GpuConstructionTime, T2ITest) {
   constexpr uint32_t reverse_graph_degree = 128;
 
   auto gt_file_name =
-      "/home/siwen/project/GGidxbuild/data/gt.train.10M.129.gpu";
+      "/home/shiwen/project/GGidxbuild/data/gt.train.10M.129.gpu";
   auto basedata_file_name =
-      "/home/siwen/project/GGidxbuild/data/10M_200/vector.fbin";
+      "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
 
   auto h_gt = std::vector<uint32_t>(gt_query_num * gt_topk);
   auto h_base_data = std::vector<float>(base_num * dim);
@@ -196,7 +196,7 @@ TEST(GpuConstructionTime, T2ITest) {
   cudaCheckError();
 
   dump_vec2_file(h_top1_match_g,
-                 "/home/siwen/project/GGidxbuild/data/top1_match_graph.ibin");
+                 "/home/shiwen/project/GGidxbuild/data/top1_match_graph.ibin");
 
   // auto host_top1_match =
   //     std::vector<uint32_t>(base_num * top1_match_graph_degree);
@@ -244,7 +244,7 @@ TEST(GpuConstructionTime, T2ITest) {
              cudaMemcpyDeviceToHost);
 
   dump_vec2_file(h_top1_match_sorted_g,
-                 "/home/siwen/project/GGidxbuild/data/top1_match_sorted.ibin");
+                 "/home/shiwen/project/GGidxbuild/data/top1_match_sorted.ibin");
 
   // SPDLOG_INFO("finish gpu compute");
 
@@ -310,7 +310,7 @@ TEST(GpuConstructionTime, T2ITest) {
 
   dump_vec2_file(
       h_pre_prune_g,
-      "/home/siwen/project/GGidxbuild/data/top1_pre_pruned_graph.ibin");
+      "/home/shiwen/project/GGidxbuild/data/top1_pre_pruned_graph.ibin");
 
   auto h_pre_prune_reverse_g =
       std::vector<uint32_t>(base_num * reverse_graph_degree);
@@ -320,7 +320,7 @@ TEST(GpuConstructionTime, T2ITest) {
 
   dump_vec2_file(
       h_pre_prune_reverse_g,
-      "/home/siwen/project/GGidxbuild/data/top1_pre_pruned_reverse.ibin");
+      "/home/shiwen/project/GGidxbuild/data/top1_pre_pruned_reverse.ibin");
 
   // cudaMalloc(&d_prune_final_graph,
   //            base_num * prune_final_graph_degree * sizeof(uint32_t));
@@ -340,7 +340,7 @@ TEST(GpuConstructionTime, T2ITest) {
              cudaMemcpyDeviceToHost);
 
   dump_vec2_file(h_merge_g,
-                 "/home/siwen/project/GGidxbuild/data/top1_merge_graph.ibin");
+                 "/home/shiwen/project/GGidxbuild/data/top1_merge_graph.ibin");
 
   constexpr uint32_t sort_neighbor_grid_size1 = 144;
   constexpr uint32_t sort_neighbor_block_size1 = 256;
@@ -363,7 +363,7 @@ TEST(GpuConstructionTime, T2ITest) {
              cudaMemcpyDeviceToHost);
   dump_vec2_file(
       h_merge_sort_g,
-      "/home/siwen/project/GGidxbuild/data/top1_merge_sort_graph.ibin");
+      "/home/shiwen/project/GGidxbuild/data/top1_merge_sort_graph.ibin");
 
   constexpr uint32_t final_prune_grid_size = 144;
   constexpr uint32_t final_prune_block_size = 512;
@@ -381,7 +381,7 @@ TEST(GpuConstructionTime, T2ITest) {
 
   dump_vec2_file(
       h_top1_projection_graph,
-      "/home/siwen/project/GGidxbuild/data/top1_projection_graph.ibin");
+      "/home/shiwen/project/GGidxbuild/data/top1_projection_graph.ibin");
 
   // NOTE(shiwen): now the d_top1_match_graph is free.
 
