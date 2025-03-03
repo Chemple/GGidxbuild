@@ -111,9 +111,9 @@ TEST(GpuConstructionTime, T2ITest) {
   constexpr uint32_t reverse_graph_degree = 128;
 
   auto gt_file_name =
-      "/home/shiwen/project/GGidxbuild/data/gt.train.10M.129.gpu";
+      "/home/siwen/project/GGidxbuild/data/gt.train.10M.129.gpu";
   auto basedata_file_name =
-      "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
+      "/home/siwen/project/GGidxbuild/data/10M_200/vector.fbin";
 
   auto h_gt = std::vector<uint32_t>(gt_query_num * gt_topk);
   auto h_base_data = std::vector<float>(base_num * dim);
@@ -130,7 +130,6 @@ TEST(GpuConstructionTime, T2ITest) {
   auto init_graph =
       std::vector<uint32_t>(base_num * top1_match_graph_degree, tomb);
   uint32_t* d_top1_match_graph = nullptr;
-  // float* d_neighbor_distance = nullptr;
 
   uint32_t* d_top1_pruned_graph = nullptr;
   uint32_t* d_reverse_graph = nullptr;
@@ -140,44 +139,29 @@ TEST(GpuConstructionTime, T2ITest) {
   // TODO(shiwen): use cuda graph to hide the kernel launch time.
   // TODO(shiwen): how to async the memcpy after one kernel launch?
   cudaMalloc(&d_gt, gt_query_num * gt_topk * sizeof(uint32_t));
-  cudaMalloc(&d_base_data, base_num * dim * sizeof(float));
+  cudaCheckError();
   cudaMalloc(&d_top1_match_graph,
              base_num * top1_match_graph_degree * sizeof(uint32_t));
-  // cudaMalloc(&d_neighbor_distance,
-  //            base_num * top1_match_graph_degree * sizeof(float));
-  cudaMalloc(&d_top1_pruned_graph,
-             base_num * top1_pruneed_graph_degree * sizeof(uint32_t));
-  cudaMalloc(&d_reverse_graph,
-             base_num * reverse_graph_degree * sizeof(uint32_t));
-  cudaMalloc(&d_prune_final_graph,
-             base_num * prune_final_graph_degree * sizeof(uint32_t));
+  cudaCheckError();
 
   SPDLOG_INFO("allocate {} GB global memory",
               1.0 *
                   (gt_query_num * gt_topk + base_num * dim +
                    base_num * top1_match_graph_degree +
-                   //  base_num * top1_match_graph_degree +
+                   base_num * top1_match_graph_degree +
                    base_num * top1_pruneed_graph_degree +
                    base_num * reverse_graph_degree +
                    base_num * prune_final_graph_degree) *
                   4 / 1024 / 1024 / 1024);
 
-  auto h_init_reverse_graph =
-      std::vector<uint32_t>(base_num * reverse_graph_degree);
-
-  for (auto i = 0; i < base_num; i++) {
-    h_init_reverse_graph[i * reverse_graph_degree] = 1;
-  }
   cudaMemcpy(d_gt, h_gt.data(), gt_query_num * gt_topk * sizeof(uint32_t),
              cudaMemcpyHostToDevice);
-  cudaMemcpy(d_base_data, h_base_data.data(), base_num * dim * sizeof(float),
-             cudaMemcpyHostToDevice);
+  cudaCheckError();
+
   cudaMemcpy(d_top1_match_graph, init_graph.data(),
              base_num * top1_match_graph_degree * sizeof(uint32_t),
              cudaMemcpyHostToDevice);
-  cudaMemcpy(d_reverse_graph, h_init_reverse_graph.data(),
-             base_num * reverse_graph_degree * sizeof(uint32_t),
-             cudaMemcpyHostToDevice);
+  cudaCheckError();
 
   // cudaStream_t main_stream;
   // cudaStreamCreate(&main_stream);
@@ -200,14 +184,19 @@ TEST(GpuConstructionTime, T2ITest) {
       <<<match_grid_size, match_block_size, 0 /*, main_stream*/>>>(
           d_gt, d_top1_match_graph);
 
+  cudaFree(d_gt);
+  cudaCheckError();
+  cudaDeviceSynchronize();
+
   auto h_top1_match_g =
       std::vector<uint32_t>(base_num * top1_match_graph_degree);
   cudaMemcpy(h_top1_match_g.data(), d_top1_match_graph,
              base_num * top1_match_graph_degree * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
+  cudaCheckError();
 
   dump_vec2_file(h_top1_match_g,
-                 "/home/shiwen/project/GGidxbuild/data/top1_match_graph.ibin");
+                 "/home/siwen/project/GGidxbuild/data/top1_match_graph.ibin");
 
   // auto host_top1_match =
   //     std::vector<uint32_t>(base_num * top1_match_graph_degree);
@@ -222,22 +211,40 @@ TEST(GpuConstructionTime, T2ITest) {
   //     h_base_data.data(), host_top1_match.data(), h_neighbor_distance.data(),
   //     base_num, dim, top1_match_graph_degree, 0xFFFFFFFF);
 
-  // constexpr uint32_t sort_neighbor_grid_size = 144;
-  // constexpr uint32_t sort_neighbor_block_size = 256;
-  // constexpr uint32_t sort_neighbor_share_memory_size =
-  //     sizeof(compute_sort_warp_state<uint32_t, float,
-  //     top1_match_graph_degree,
-  //                                    dim>) *
-  //     sort_neighbor_block_size / 32;
-  // ;
-  // // TODO(shiwen): change this kernel to gain more performance❗❗❗❗❗❗❗
-  // compute_and_sort_ip_distance_kernel<
-  //     sort_neighbor_grid_size, sort_neighbor_block_size, base_num,
-  //     top1_match_graph_degree, tomb, dim, sort_neighbor_share_memory_size,
-  //     float, uint32_t><<<sort_neighbor_grid_size, sort_neighbor_block_size,
-  //                        sort_neighbor_share_memory_size /*,
-  //                        main_stream*/>>>(
-  //     d_base_data, d_top1_match_graph, d_neighbor_distance);
+  constexpr uint32_t sort_neighbor_grid_size = 144;
+  constexpr uint32_t sort_neighbor_block_size = 256;
+  constexpr uint32_t sort_neighbor_share_memory_size =
+      sizeof(compute_sort_warp_state<uint32_t, float, top1_match_graph_degree,
+                                     dim>) *
+      sort_neighbor_block_size / 32;
+
+  cudaMalloc(&d_base_data, base_num * dim * sizeof(float));
+  cudaCheckError();
+
+  SPDLOG_INFO("allocate {} memory for d_neighbor_distance",
+              base_num * top1_match_graph_degree * sizeof(float));
+  cudaMemcpy(d_base_data, h_base_data.data(), base_num * dim * sizeof(float),
+             cudaMemcpyHostToDevice);
+  cudaCheckError();
+  cudaDeviceSynchronize();
+
+  // TODO(shiwen): change this kernel to gain more performance❗❗❗❗❗❗❗
+  sort_neighbor_kernel<
+      sort_neighbor_grid_size, sort_neighbor_block_size, base_num,
+      top1_match_graph_degree, tomb, dim, sort_neighbor_share_memory_size,
+      float, uint32_t><<<sort_neighbor_grid_size, sort_neighbor_block_size,
+                         sort_neighbor_share_memory_size /*,
+                         main_stream*/>>>(
+      d_base_data, d_top1_match_graph);
+
+  auto h_top1_match_sorted_g =
+      std::vector<uint32_t>(base_num * top1_match_graph_degree);
+  cudaMemcpy(h_top1_match_sorted_g.data(), d_top1_match_graph,
+             base_num * top1_match_graph_degree * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+
+  dump_vec2_file(h_top1_match_sorted_g,
+                 "/home/siwen/project/GGidxbuild/data/top1_match_sorted.ibin");
 
   // SPDLOG_INFO("finish gpu compute");
 
@@ -278,6 +285,13 @@ TEST(GpuConstructionTime, T2ITest) {
   //   }
   // }
 
+  cudaMalloc(&d_top1_pruned_graph,
+             base_num * top1_pruneed_graph_degree * sizeof(uint32_t));
+  cudaCheckError();
+  cudaMalloc(&d_reverse_graph,
+             base_num * reverse_graph_degree * sizeof(uint32_t));
+  cudaCheckError();
+
   constexpr uint32_t rng_reverse_grid_size = 144;
   constexpr uint32_t rng_reverse_block_size = 512;
   rng_prune_and_add_reverse_kernel<
@@ -290,13 +304,27 @@ TEST(GpuConstructionTime, T2ITest) {
 
   auto h_pre_prune_g =
       std::vector<uint32_t>(base_num * top1_pruneed_graph_degree);
-  cudaMemcpy(h_pre_prune_g.data(), d_top1_match_graph,
+  cudaMemcpy(h_pre_prune_g.data(), d_top1_pruned_graph,
              base_num * top1_pruneed_graph_degree * sizeof(uint32_t),
              cudaMemcpyDeviceToHost);
 
   dump_vec2_file(
       h_pre_prune_g,
-      "/home/shiwen/project/GGidxbuild/data/top1_pre_pruned_graph.ibin");
+      "/home/siwen/project/GGidxbuild/data/top1_pre_pruned_graph.ibin");
+
+  auto h_pre_prune_reverse_g =
+      std::vector<uint32_t>(base_num * reverse_graph_degree);
+  cudaMemcpy(h_pre_prune_reverse_g.data(), d_reverse_graph,
+             base_num * reverse_graph_degree * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+
+  dump_vec2_file(
+      h_pre_prune_reverse_g,
+      "/home/siwen/project/GGidxbuild/data/top1_pre_pruned_reverse.ibin");
+
+  // cudaMalloc(&d_prune_final_graph,
+  //            base_num * prune_final_graph_degree * sizeof(uint32_t));
+  // cudaCheckError();
 
   constexpr uint32_t merge_to_reverse_grid_size = 144;
   constexpr uint32_t merge_to_reverse_block_size = 512;
@@ -312,15 +340,38 @@ TEST(GpuConstructionTime, T2ITest) {
              cudaMemcpyDeviceToHost);
 
   dump_vec2_file(h_merge_g,
-                 "/home/shiwen/project/GGidxbuild/data/top1_merge_graph.ibin");
+                 "/home/siwen/project/GGidxbuild/data/top1_merge_graph.ibin");
+
+  constexpr uint32_t sort_neighbor_grid_size1 = 144;
+  constexpr uint32_t sort_neighbor_block_size1 = 256;
+  constexpr uint32_t sort_neighbor_share_memory_size1 =
+      sizeof(
+          compute_sort_warp_state<uint32_t, float, reverse_graph_degree, dim>) *
+      sort_neighbor_block_size / 32;
+  ;
+  reverse_sort_kernel<
+      sort_neighbor_grid_size1, sort_neighbor_block_size1, base_num,
+      reverse_graph_degree, tomb, dim, sort_neighbor_share_memory_size1,
+      float, uint32_t><<<sort_neighbor_grid_size1, sort_neighbor_block_size1,
+                         sort_neighbor_share_memory_size1 /*,
+                         main_stream*/>>>(
+      d_base_data, d_reverse_graph);
+
+  auto h_merge_sort_g = std::vector<uint32_t>(base_num * reverse_graph_degree);
+  cudaMemcpy(h_merge_sort_g.data(), d_reverse_graph,
+             base_num * reverse_graph_degree * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+  dump_vec2_file(
+      h_merge_sort_g,
+      "/home/siwen/project/GGidxbuild/data/top1_merge_sort_graph.ibin");
 
   constexpr uint32_t final_prune_grid_size = 144;
   constexpr uint32_t final_prune_block_size = 512;
-  prune_merge_graph<final_prune_grid_size, final_prune_block_size, base_num,
-                    reverse_graph_degree, top1_pruneed_graph_degree, tomb, dim,
-                    true, float, uint32_t>
-      <<<final_prune_grid_size, final_prune_block_size>>>(
-          d_base_data, d_reverse_graph, d_top1_pruned_graph);
+  prune_merge_graph_without_distance<
+      final_prune_grid_size, final_prune_block_size, base_num,
+      reverse_graph_degree, top1_pruneed_graph_degree, tomb, dim, true, float,
+      uint32_t><<<final_prune_grid_size, final_prune_block_size>>>(
+      d_base_data, d_reverse_graph, d_top1_pruned_graph);
 
   auto h_top1_projection_graph =
       std::vector<uint32_t>(base_num * top1_pruneed_graph_degree);
@@ -330,7 +381,7 @@ TEST(GpuConstructionTime, T2ITest) {
 
   dump_vec2_file(
       h_top1_projection_graph,
-      "/home/shiwen/project/GGidxbuild/data/top1_projection_graph.ibin");
+      "/home/siwen/project/GGidxbuild/data/top1_projection_graph.ibin");
 
   // NOTE(shiwen): now the d_top1_match_graph is free.
 

@@ -35,16 +35,19 @@ bool read_vec_from_file(std::vector<vec_type>& vec, char const* file_path) {
 
 template <typename vec_type>
 void dump_vec2_file(std::vector<vec_type> const& vec, char const* file_name) {
-  std::ofstream outFile(file_name, std::ios::binary);
+  std::ofstream outFile(file_name, std::ios::binary | std::ios::out);
   if (!outFile) {
-    SPDLOG_ERROR("fail to open the file {}", file_name);
+    SPDLOG_ERROR("fail to open or create the file {}", file_name);
     exit(-1);
   }
-  outFile.write((char*)(vec.data()), vec.size() * sizeof(vec_type));
+
+  outFile.write(reinterpret_cast<char const*>(vec.data()),
+                vec.size() * sizeof(vec_type));
   if (!outFile) {
-    SPDLOG_ERROR("wrong to write the file {}", file_name);
+    SPDLOG_ERROR("failed to write to the file {}", file_name);
     exit(-1);
   }
+
   outFile.close();
-  SPDLOG_INFO("successfully dump");
+  SPDLOG_INFO("successfully dumped vector to file {}", file_name);
 }

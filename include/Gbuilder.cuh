@@ -243,8 +243,6 @@ __global__ void compute_and_sort_ip_distance_kernel(
 
       id_type const neighbor_id =
           graph[base_vector_id * max_in_degree + neighbor_idx];
-
-      assert(neighbor_id < base_num);
       // __syncwarp();
 
       if (neighbor_id == tomb) {
@@ -308,6 +306,347 @@ __global__ void compute_and_sort_ip_distance_kernel(
         neighbor_distance[base_vector_id * max_in_degree + i] = FLT_MAX;
         graph[base_vector_id * max_in_degree + i] = tomb;
       }
+    }
+    __syncwarp();
+  }
+}
+
+// FIXME(shiwen): too much __syncwarp()!!!
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+          uint32_t shared_memory_size, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void sort_neighbor_kernel(data_type const* __restrict__ base_data,
+                                     id_type* __restrict__ graph) {
+  constexpr uint32_t lane_width = 32;
+  constexpr uint32_t warp_per_block = block_size / lane_width;
+  constexpr uint32_t shared_memory_size_per_warp =
+      sizeof(compute_sort_warp_state<id_type, data_type, max_in_degree, dim>);
+  constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
+
+  static_assert(shared_memory_size ==
+                shared_memory_size_per_warp * warp_per_block);
+
+  extern __shared__
+      compute_sort_warp_state<id_type, data_type, max_in_degree, dim>
+          warp_states[];
+
+  uint32_t const global_warp_id =
+      (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
+  uint32_t const local_warp_id = threadIdx.x / lane_width;
+  uint32_t const lane_id = threadIdx.x % lane_width;
+
+  // Shared memory layout per warp
+  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
+
+  for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
+       base_vector_id += global_warp_num) {
+    // Load base vector
+    for (uint32_t i = lane_id; i < dim; i += lane_width) {
+      assert(i < dim);
+      base_vector_sdata[i] = base_data[base_vector_id * dim + i];
+    }
+    // __syncwarp();
+
+    uint32_t min_invalid_neighbor_idx = max_in_degree;
+    // Process neighbors and collect distances
+    for (uint32_t neighbor_idx = 0; neighbor_idx < max_in_degree;
+         ++neighbor_idx) {
+      // __syncwarp();
+      assert(neighbor_idx < max_in_degree);
+      assert(base_vector_id < base_num);
+
+      id_type const neighbor_id =
+          graph[base_vector_id * max_in_degree + neighbor_idx];
+      // __syncwarp();
+
+      if (neighbor_id == tomb) {
+        min_invalid_neighbor_idx = neighbor_idx;
+        // NOTE(shiwen): set all distance of tomb id to FLT_MAX
+        if (lane_id == 0) {
+          for (uint32_t neighbor_idx = min_invalid_neighbor_idx;
+               neighbor_idx < max_in_degree; neighbor_idx++) {
+            assert(neighbor_idx < max_in_degree);
+            distance_sdata[neighbor_idx] = FLT_MAX;
+          }
+        }
+        // __syncwarp();
+
+        break;
+      }
+
+      // Load neighbor vector
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        assert(neighbor_id < base_num);
+
+        neighbor_vector_sdata[i] = base_data[neighbor_id * dim + i];
+      }
+      // __syncwarp();
+
+      data_type sum = 0;
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        sum += base_vector_sdata[i] * neighbor_vector_sdata[i];
+      }
+
+      for (int offset = 16; offset > 0; offset >>= 1) {
+        sum += __shfl_down_sync(0xffffffff, sum, offset);
+      }
+      // __syncwarp();
+
+      if (lane_id == 0) {
+        assert(neighbor_idx < max_in_degree);
+        distance_sdata[neighbor_idx] = -sum;
+        neighbor_id_sdata[neighbor_idx] = neighbor_id;
+      }
+      __syncwarp();
+    }
+
+    // __syncwarp();
+
+    // FIXME(shiwen): check the 3rd template.
+    warp_sort<data_type, id_type, max_in_degree, lane_width>(
+        distance_sdata, neighbor_id_sdata, true);
+
+    // __syncwarp();
+
+    for (uint32_t i = lane_id; i < max_in_degree; i += lane_width) {
+      assert(i < max_in_degree);
+      if (i < min_invalid_neighbor_idx) {
+        graph[base_vector_id * max_in_degree + i] = neighbor_id_sdata[i];
+      } else if (i >= min_invalid_neighbor_idx) {
+        graph[base_vector_id * max_in_degree + i] = tomb;
+      }
+    }
+    __syncwarp();
+  }
+}
+
+// FIXME(shiwen): too much __syncwarp()!!!
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t max_in_degree, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+          uint32_t shared_memory_size, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void reverse_compute_and_sort_ip_distance_kernel(
+    data_type const* __restrict__ base_data, id_type* __restrict__ graph,
+    data_type* __restrict__ neighbor_distance) {
+  constexpr uint32_t lane_width = 32;
+  constexpr uint32_t warp_per_block = block_size / lane_width;
+  constexpr uint32_t shared_memory_size_per_warp =
+      sizeof(compute_sort_warp_state<id_type, data_type, max_in_degree, dim>);
+  constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
+
+  static_assert(shared_memory_size ==
+                shared_memory_size_per_warp * warp_per_block);
+
+  extern __shared__
+      compute_sort_warp_state<id_type, data_type, max_in_degree, dim>
+          warp_states[];
+
+  uint32_t const global_warp_id =
+      (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
+  uint32_t const local_warp_id = threadIdx.x / lane_width;
+  uint32_t const lane_id = threadIdx.x % lane_width;
+
+  // Shared memory layout per warp
+  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
+
+  for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
+       base_vector_id += global_warp_num) {
+    auto valid_num = graph[base_vector_id * max_in_degree] - 1;
+    assert(valid_num < max_in_degree);
+    if (valid_num == 0) {
+      continue;
+    }
+    // Load base vector
+    for (uint32_t i = lane_id; i < dim; i += lane_width) {
+      assert(i < dim);
+      base_vector_sdata[i] = base_data[base_vector_id * dim + i];
+    }
+    // __syncwarp();
+
+    // Process neighbors and collect distances
+    neighbor_vector_sdata[0] = FLT_MAX;
+    for (uint32_t neighbor_idx = 1; neighbor_idx < valid_num + 1;
+         ++neighbor_idx) {
+      // __syncwarp();
+      assert(neighbor_idx < max_in_degree);
+      assert(base_vector_id < base_num);
+
+      id_type const neighbor_id =
+          graph[base_vector_id * max_in_degree + neighbor_idx];
+
+      assert(neighbor_id < base_num);
+
+      // Load neighbor vector
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        assert(neighbor_id < base_num);
+
+        neighbor_vector_sdata[i] = base_data[neighbor_id * dim + i];
+      }
+      // __syncwarp();
+
+      data_type sum = 0;
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        sum += base_vector_sdata[i] * neighbor_vector_sdata[i];
+      }
+
+      for (int offset = 16; offset > 0; offset >>= 1) {
+        sum += __shfl_down_sync(0xffffffff, sum, offset);
+      }
+      // __syncwarp();
+
+      if (lane_id == 0) {
+        assert(neighbor_idx < max_in_degree);
+        distance_sdata[neighbor_idx] = -sum;
+        neighbor_id_sdata[neighbor_idx] = neighbor_id;
+      }
+      __syncwarp();
+    }
+
+    for (auto i = valid_num + 1; i < max_in_degree; i++) {
+      neighbor_id_sdata[i] = FLT_MAX;
+    }
+
+    // __syncwarp();
+
+    // FIXME(shiwen): check the 3rd template.
+    warp_sort<data_type, id_type, max_in_degree, lane_width>(
+        distance_sdata, neighbor_id_sdata, true);
+
+    neighbor_id_sdata[max_in_degree - 1] = valid_num + 1;
+
+    // __syncwarp();
+
+    for (uint32_t i = lane_id; i < valid_num; i += lane_width) {
+      neighbor_distance[base_vector_id * max_in_degree + i] = distance_sdata[i];
+      graph[base_vector_id * max_in_degree + i] = neighbor_id_sdata[i];
+    }
+    if (lane_id == 0) {
+      graph[base_vector_id * max_in_degree + max_in_degree - 1] = valid_num + 1;
+    }
+    __syncwarp();
+  }
+}
+
+// FIXME(shiwen): too much __syncwarp()!!!
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t reverse_graph_degree, uint32_t tomb = 0xFFFFFFFF,
+          uint32_t dim, uint32_t shared_memory_size, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
+                                    id_type* __restrict__ reverse_graph) {
+  constexpr uint32_t lane_width = 32;
+  constexpr uint32_t warp_per_block = block_size / lane_width;
+  constexpr uint32_t shared_memory_size_per_warp = sizeof(
+      compute_sort_warp_state<id_type, data_type, reverse_graph_degree, dim>);
+  constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
+
+  static_assert(shared_memory_size ==
+                shared_memory_size_per_warp * warp_per_block);
+
+  extern __shared__
+      compute_sort_warp_state<id_type, data_type, reverse_graph_degree, dim>
+          warp_states[];
+
+  uint32_t const global_warp_id =
+      (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
+  uint32_t const local_warp_id = threadIdx.x / lane_width;
+  uint32_t const lane_id = threadIdx.x % lane_width;
+
+  // Shared memory layout per warp
+  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
+
+  for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
+       base_vector_id += global_warp_num) {
+    auto valid_num = reverse_graph[base_vector_id * reverse_graph_degree];
+    assert(valid_num < rever_graph_degree);
+    if (valid_num == 0) {
+      if (lane_id == 0) {
+        reverse_graph[base_vector_id * reverse_graph_degree +
+                      reverse_graph_degree - 1] = valid_num;
+      }
+      continue;
+    }
+    // Load base vector
+    for (uint32_t i = lane_id; i < dim; i += lane_width) {
+      assert(i < dim);
+      base_vector_sdata[i] = base_data[base_vector_id * dim + i];
+    }
+    // __syncwarp();
+
+    // Process neighbors and collect distances
+    distance_sdata[0] = FLT_MAX;
+    for (uint32_t neighbor_idx = 1; neighbor_idx < valid_num + 1;
+         ++neighbor_idx) {
+      // __syncwarp();
+      assert(neighbor_idx < max_in_degree);
+      assert(base_vector_id < base_num);
+
+      id_type const neighbor_id =
+          reverse_graph[base_vector_id * reverse_graph_degree + neighbor_idx];
+
+      assert(neighbor_id < base_num);
+
+      // Load neighbor vector
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        assert(neighbor_id < base_num);
+
+        neighbor_vector_sdata[i] = base_data[neighbor_id * dim + i];
+      }
+      // __syncwarp();
+
+      data_type sum = 0;
+      for (uint32_t i = lane_id; i < dim; i += lane_width) {
+        assert(i < dim);
+        sum += base_vector_sdata[i] * neighbor_vector_sdata[i];
+      }
+
+      for (int offset = 16; offset > 0; offset >>= 1) {
+        sum += __shfl_down_sync(0xffffffff, sum, offset);
+      }
+      // __syncwarp();
+
+      if (lane_id == 0) {
+        assert(neighbor_idx < max_in_degree);
+        distance_sdata[neighbor_idx] = -sum;
+        neighbor_id_sdata[neighbor_idx] = neighbor_id;
+      }
+      __syncwarp();
+    }
+
+    for (auto i = valid_num + 1; i < reverse_graph_degree; i++) {
+      distance_sdata[i] = FLT_MAX;
+    }
+
+    // __syncwarp();
+
+    // FIXME(shiwen): check the 3rd template.
+    warp_sort<data_type, id_type, reverse_graph_degree, lane_width>(
+        distance_sdata, neighbor_id_sdata, true);
+
+    // __syncwarp();
+
+    for (uint32_t i = lane_id; i < valid_num - 1; i += lane_width) {
+      reverse_graph[base_vector_id * reverse_graph_degree + i] =
+          neighbor_id_sdata[i];
+    }
+    if (lane_id == 0) {
+      reverse_graph[base_vector_id * reverse_graph_degree +
+                    reverse_graph_degree - 1] = valid_num;
     }
     __syncwarp();
   }
@@ -393,10 +732,17 @@ template <typename id_type = uint32_t, uint32_t reverse_graph_degree,
 __device__ __forceinline__ void add_to_reverse_graph_thread_level(
     id_type const& from_node_id, id_type const& to_node_id,
     id_type* reverse_graph) {
-  auto loc = atomicAdd(&reverse_graph[from_node_id * reverse_graph_degree], 1);
+  constexpr uint32_t start_idx = 1;
+  auto prev_edge_num =
+      atomicAdd(&reverse_graph[from_node_id * reverse_graph_degree], 1);
+  auto insert_idx = start_idx + prev_edge_num;
   // naive cut off
-  if (loc < reverse_graph_max_neighbor) {
-    reverse_graph[from_node_id * reverse_graph_degree + loc] = to_node_id;
+  if (insert_idx < reverse_graph_max_neighbor) {
+    reverse_graph[from_node_id * reverse_graph_degree + insert_idx] =
+        to_node_id;
+  } else {
+    reverse_graph[from_node_id * reverse_graph_degree] =
+        reverse_graph_max_neighbor;
   }
 }
 
@@ -415,8 +761,8 @@ distance_between(id_type const& x_id, id_type const& y_id,
 }
 
 // NOTE(shiwen): init value: 1. the first element of each row of reverse graph
-// is set to 1(first insert location). 2.the first element of each row of prune
-// graph is set to 0(init number of prune number)
+// is set to 0(init number of reverse edge number). 2.the first element of each
+// row of prune graph is set to 0(init number of prune number)
 template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t origin_graph_degree, uint32_t prune_graph_degree,
           uint32_t reverse_graph_degree, uint32_t tomb = 0xFFFFFFFF,
@@ -426,7 +772,7 @@ __global__ void rng_prune_and_add_reverse_kernel(
     data_type const* __restrict__ base_data, id_type const* __restrict__ graph,
     id_type* __restrict__ reverse_graph, id_type* __restrict__ pruned_graph) {
   constexpr auto reverse_graph_max_neighbor =
-      prune_graph_degree - origin_graph_degree;
+      reverse_graph_degree - prune_graph_degree;
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
   // choose this strategy: if we add one edge to the prune graph, we add the
@@ -443,7 +789,7 @@ __global__ void rng_prune_and_add_reverse_kernel(
     // num of neighbor.
     auto pruned_graph_neighbor_idx = 1;
     assert(neighbor_base_id < base_num);
-    assert(pruned_graph_neighbor_idx < prune_graph_degree);
+    assert(pruned_graph_neighbor_idx < reverse_graph_max_neighbor);
     pruned_graph[base_id * prune_graph_degree + pruned_graph_neighbor_idx] =
         neighbor_base_id;
     add_to_reverse_graph_thread_level<id_type, reverse_graph_degree,
@@ -460,7 +806,7 @@ __global__ void rng_prune_and_add_reverse_kernel(
       }
       auto compare_idx = 1;
       for (; compare_idx <= pruned_graph_neighbor_idx; compare_idx++) {
-        assert(compare_idx < prune_graph_degree);
+        assert(compare_idx < reverse_graph_max_neighbor);
         auto compare_base_id =
             pruned_graph[base_id * prune_graph_degree + compare_idx];
         assert(compare_base_id != tomb);
@@ -470,7 +816,7 @@ __global__ void rng_prune_and_add_reverse_kernel(
         data_type neighbor_distance =
             distance_between<float, uint32_t, dim, base_num>(
                 neighbor_base_id, base_id, base_data);
-        assert(neighbor_idx < graph_max_in_degree);
+        assert(neighbor_idx < origin_graph_degree);
         if (compare_distance < neighbor_distance) {
           break;
         }
@@ -479,7 +825,7 @@ __global__ void rng_prune_and_add_reverse_kernel(
       if (compare_idx > pruned_graph_neighbor_idx) {
         pruned_graph_neighbor_idx++;
         // NOTE(shiwen):
-        assert(pruned_graph_neighbor_idx < pruned_graph_max_in_degree);
+        assert(pruned_graph_neighbor_idx < prune_graph_degree);
         assert(base_id != neighbor_base_id);
         pruned_graph[base_id * prune_graph_degree + pruned_graph_neighbor_idx] =
             neighbor_base_id;
@@ -522,8 +868,8 @@ __global__ void merge_prune_graph_to_reverse_graph_kernel(
     pruned_graph[base_id * prune_graph_degree] = 0;
     for (auto merge_idx = 0; merge_idx < prune_graph_neighbor_num;
          merge_idx++) {
-      reverse_graph[base_id * prune_graph_degree + loc + merge_idx] =
-          pruned_graph[merge_idx];
+      reverse_graph[base_id * reverse_graph_degree + loc + 1 + merge_idx] =
+          pruned_graph[base_id * prune_graph_degree + 1 + merge_idx];
     }
   }
 }
@@ -534,14 +880,89 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t merge_graph_degree, uint32_t final_graph_degree,
           uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = true,
           typename data_type = float, typename id_type = uint32_t>
-__global__ void prune_merge_graph(data_type const* __restrict__ base_data,
-                                  id_type* __restrict__ merge_graph,
-                                  id_type* __restrict__ final_graph) {
+__global__ void prune_merge_graph(
+    data_type const* __restrict__ base_data, id_type* __restrict__ merge_graph,
+    data_type const* __restrict__ neighbor_distance,
+    id_type* __restrict__ final_graph) {
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
 
   for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
-    auto neighbor_num = merge_graph[base_id * merge_graph_degree] - 1;
+    auto neighbor_num =
+        merge_graph[base_id * merge_graph_degree + merge_graph_degree - 1] - 1;
+    if (neighbor_num == 0) {
+      // merge_graph[base_id * merge_graph_degree] = 1;
+      continue;
+    }
+    // insert base id of the first neighbor first.
+    auto neighbor_idx = 1;
+    auto neighbor_base_id =
+        merge_graph[base_id * merge_graph_degree + neighbor_idx];
+    // start at 0, final graph.
+    auto final_graph_neighbor_idx = 0;
+    assert(neighbor_base_id < base_num);
+    assert(final_graph_neighbor_idx < final_graph_degree);
+    final_graph[base_id * final_graph_degree + final_graph_neighbor_idx] =
+        neighbor_base_id;
+    neighbor_idx++;
+    auto explore_flag = true;
+    // FIXME(shiwen): this condition...
+    for (; (explore_flag && neighbor_idx < neighbor_num + 1); neighbor_idx++) {
+      assert(neighbor_idx < merge_graph_degree);
+      neighbor_base_id =
+          merge_graph[base_id * merge_graph_degree + neighbor_idx];
+      // in this setting, neighbor_base_id should not be tomb.
+      assert(neighbor_base_id < base_num);
+      auto compare_idx = 0;
+      for (; compare_idx <= final_graph_neighbor_idx; compare_idx++) {
+        assert(compare_idx < final_graph_degree);
+        auto compare_base_id =
+            final_graph[base_id * final_graph_degree + compare_idx];
+        assert(compare_base_id != tomb);
+        data_type compare_distance =
+            distance_between<float, uint32_t, dim, base_num>(
+                neighbor_base_id, compare_base_id, base_data);
+        data_type the_neighbor_distance =
+            neighbor_distance[base_id * merge_graph_degree + neighbor_idx];
+        if (compare_distance < neighbor_distance) {
+          break;
+        }
+      }
+      // pass all the distance tests.
+      if (compare_idx > final_graph_neighbor_idx) {
+        final_graph_neighbor_idx++;
+        // NOTE(shiwen):
+        assert(final_graph_neighbor_idx < final_graph_degree);
+        assert(base_id != neighbor_base_id);
+        final_graph[base_id * final_graph_degree + final_graph_neighbor_idx] =
+            neighbor_base_id;
+        if (final_graph_neighbor_idx == final_graph_degree - 1) {
+          explore_flag = false;
+          break;
+        }
+      }
+    }
+    // for  reuse of reverse graph.
+    merge_graph[base_id * merge_graph_degree] = 1;
+    // TODO(shiwen): slight RNG prune?
+  }
+}
+
+// NOTE(shiwen): set the first element of each row of prune graph to 1(init
+// number of reverse number)
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t merge_graph_degree, uint32_t final_graph_degree,
+          uint32_t tomb = 0xFFFFFFFF, uint32_t dim, bool is_strict = true,
+          typename data_type = float, typename id_type = uint32_t>
+__global__ void prune_merge_graph_without_distance(
+    data_type const* __restrict__ base_data, id_type* __restrict__ merge_graph,
+    id_type* __restrict__ final_graph) {
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    auto neighbor_num =
+        merge_graph[base_id * merge_graph_degree + merge_graph_degree - 1] - 1;
     if (neighbor_num == 0) {
       // merge_graph[base_id * merge_graph_degree] = 1;
       continue;
