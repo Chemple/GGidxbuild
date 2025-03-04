@@ -336,6 +336,108 @@ TEST(GpuConstructionTime, TESTfusion_prune_reverse_kernel) {
   cudaFree(d_pr_lists);
 }
 
+TEST(GpuConstructionTime, TESTtop1_projection) {
+  cudaDeviceReset();
+  constexpr uint32_t match_degree = 128;
+  constexpr uint32_t base_num = 10000000;
+  constexpr uint32_t dim = 200;
+  constexpr uint32_t tomb = 0XFFFFFFFF;
+  constexpr uint32_t reverse_edge_num = 111;
+  constexpr uint32_t pruned_edge_num = 15;
+  constexpr uint32_t top1_projection_degree = 15;
+  constexpr uint32_t num_element_pr_list =
+      reverse_edge_num + pruned_edge_num + 2;
+
+  auto basedata_file_name =
+      "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
+  auto match_graph_file_name =
+      "/home/shiwen/project/GGidxbuild/data/top1_match_graph.ibin";
+
+  auto h_match_graph = std::vector<uint32_t>(base_num * match_degree);
+  auto h_base_data = std::vector<uint32_t>(base_num * dim);
+
+  read_vec_from_file(h_match_graph, match_graph_file_name);
+  read_vec_from_file(h_base_data, basedata_file_name);
+
+  uint32_t* d_match_graph = nullptr;
+  float* d_base_data = nullptr;
+  pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>* d_pr_lists =
+      nullptr;
+  uint32_t* d_top1_projection = nullptr;
+
+  cudaMalloc(&d_base_data, base_num * dim * sizeof(float));
+  cudaCheckError();
+  cudaMalloc(&d_match_graph, base_num * match_degree * sizeof(uint32_t));
+  cudaMalloc(
+      &d_pr_lists,
+      base_num *
+          sizeof(
+              pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>));
+  cudaCheckError();
+  cudaMalloc(&d_top1_projection,
+             base_num * top1_projection_degree * sizeof(uint32_t));
+  cudaCheckError();
+
+  cudaMemcpy(d_base_data, h_base_data.data(), base_num * dim * sizeof(float),
+             cudaMemcpyHostToDevice);
+  cudaCheckError();
+  cudaMemcpy(d_match_graph, h_match_graph.data(),
+             base_num * match_degree * sizeof(uint32_t),
+             cudaMemcpyHostToDevice);
+  cudaCheckError();
+
+  SPDLOG_INFO("begin fusion prune graph");
+
+  constexpr uint32_t grid_size = 144;
+  constexpr uint32_t block_size = 256;
+
+  fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num, match_degree,
+                                 pruned_edge_num, reverse_edge_num, tomb, dim,
+                                 true, float, uint32_t>
+      <<<grid_size, block_size>>>(d_base_data, d_match_graph, d_pr_lists);
+
+  cudaDeviceSynchronize();
+  SPDLOG_INFO("finish fusion prune graph");
+
+  auto h_check_g = std::vector<uint32_t>(base_num * num_element_pr_list);
+  cudaMemcpy(
+      h_check_g.data(), d_pr_lists,
+      base_num *
+          sizeof(pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>),
+      cudaMemcpyDeviceToHost);
+
+  dump_vec2_file(
+      h_check_g,
+      "/home/shiwen/project/GGidxbuild/data/TESTfusion_prune_reverse_kernel");
+
+  constexpr uint32_t projection_grid_size = 144;
+  constexpr uint32_t projection_block_size = 256;
+
+  SPDLOG_INFO("begin top1 projection");
+
+  fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
+                                 base_num, pruned_edge_num, reverse_edge_num,
+                                 top1_projection_degree, tomb, dim, true, float,
+                                 uint32_t>
+      <<<projection_grid_size, projection_block_size>>>(d_base_data, d_pr_lists,
+                                                        d_top1_projection);
+
+  SPDLOG_INFO("end top1 projection");
+
+  auto h_projection = std::vector<uint32_t>(base_num * top1_projection_degree);
+  cudaMemcpy(h_projection.data(), d_top1_projection,
+             base_num * top1_projection_degree * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+
+  dump_vec2_file(h_projection,
+                 "/home/shiwen/project/GGidxbuild/data/TESTtop1_projection");
+
+  cudaFree(d_base_data);
+  cudaFree(d_match_graph);
+  cudaFree(d_pr_lists);
+  cudaFree(d_top1_projection);
+}
+
 TEST(GpuConstructionTime, DISABLED_T2ITest) {
   constexpr uint32_t gt_topk = 129;
   constexpr uint32_t top1_match_graph_degree = 128;
