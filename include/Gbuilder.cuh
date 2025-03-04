@@ -1346,11 +1346,15 @@ __device__ __forceinline__ void merge_and_sort(
     distance_local_memory[i] = FLT_MAX;
   }
   for (auto i = 2 + reverse_edge_num;
-       i < 2 + reverse_edge_num + pruned_edge_num; i++) {
+       i < 2 + reverse_edge_num + prune_real_number; i++) {
     distance_local_memory[i] = distance_between<float, uint32_t, dim, base_num>(
         base_id, pr_list->list[i], base_data);
   }
-  bubble_sort<uint32_t, float, 2 + reverse_edge_num + pruned_edge_num>(
+  for (auto i = 2 + reverse_edge_num + prune_real_number;
+       i < 2 + reverse_edge_num + pruned_edge_num; i++) {
+    distance_local_memory[i] = FLT_MAX;
+  }
+  bubble_sort<id_type, data_type, 2 + reverse_edge_num + pruned_edge_num>(
       distance_local_memory, (id_type*)(pr_list->list));
 }
 

@@ -396,8 +396,10 @@ TEST(GpuConstructionTime, TESTtop1_projection) {
                                  true, float, uint32_t>
       <<<grid_size, block_size>>>(d_base_data, d_match_graph, d_pr_lists);
 
+  cudaCheckError();
   cudaDeviceSynchronize();
   SPDLOG_INFO("finish fusion prune graph");
+  cudaCheckError();
 
   auto h_check_g = std::vector<uint32_t>(base_num * num_element_pr_list);
   cudaMemcpy(
@@ -415,12 +417,16 @@ TEST(GpuConstructionTime, TESTtop1_projection) {
 
   SPDLOG_INFO("begin top1 projection");
 
+  cudaDeviceSynchronize();
+
   fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
                                  base_num, pruned_edge_num, reverse_edge_num,
                                  top1_projection_degree, tomb, dim, true, float,
                                  uint32_t>
       <<<projection_grid_size, projection_block_size>>>(d_base_data, d_pr_lists,
                                                         d_top1_projection);
+
+  cudaDeviceSynchronize();
 
   SPDLOG_INFO("end top1 projection");
 
