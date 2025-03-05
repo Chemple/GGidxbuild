@@ -708,13 +708,15 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t topk, uint32_t tomb = 0XFFFFFFFF, uint32_t hash_table_size,
           uint32_t reset_iter, typename id_type = uint32_t,
           typename data_type = float>
-__global__ void link_process_v0(
-    data_type* base_data, HashTable<uint32_t, hash_table_size>* hash_tables,
-    id_type* graph, id_type* result /*, id_type* enter_points*/) {
+__global__ void __launch_bounds__(block_size)
+    link_process_v0(data_type* base_data,
+                    HashTable<uint32_t, hash_table_size>* hash_tables,
+                    id_type* graph,
+                    id_type* result /*, id_type* enter_points*/) {
   constexpr uint32_t lane_width = 32;
   constexpr uint32_t warp_per_block = block_size / lane_width;
-  constexpr uint32_t shared_memory_size_per_warp = sizeof(
-      search_warp_state_global_hashtable<id_type, data_type, dim, Km, Kp, Kd>);
+  constexpr uint32_t shared_memory_size_per_warp =
+      sizeof(search_warp_state_v0<id_type, data_type, dim, Km, Kp, Kd>);
   constexpr uint32_t global_warp_num = (block_size * grid_size) / lane_width;
 
   // for 1-bit parented node management.
@@ -733,16 +735,16 @@ __global__ void link_process_v0(
   static_assert(topk <= Km + Kp * Kd);
 
   extern __shared__ search_warp_state_v0<id_type, data_type, dim, Km, Kp, Kd>
-      warp_states[];
+      s_warp_states[];
 
   uint32_t const global_warp_id =
       (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
   uint32_t const local_warp_id = threadIdx.x / lane_width;
   uint32_t const lane_id = threadIdx.x % lane_width;
 
-  id_type* node_id_list_sdata = warp_states[local_warp_id].node_id_list_;
+  id_type* node_id_list_sdata = s_warp_states[local_warp_id].node_id_list_;
   data_type* node_distance_list_sdata =
-      warp_states[local_warp_id].node_distance_list_;
+      s_warp_states[local_warp_id].node_distance_list_;
   HashTable<uint32_t, hash_table_size>* visit_table =
       &hash_tables[global_warp_id];
 

@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <omp.h>
+// #include <omp.h>
 #include <sys/types.h>
 
 namespace Gbuilder {
@@ -688,7 +688,7 @@ TEST(TestSearch, GpuEnhanceLinkBaseline) {
   float* d_base_data = nullptr;
   // float* d_query_data = nullptr;
   uint32_t* d_result = nullptr;
-  HashTable<uint32_t, 1 << 12>* d_hashtables = nullptr;
+  HashTable<uint32_t, hashtable_size>* d_hashtables = nullptr;
   // uint32_t* d_enterpoints = nullptr;
   // float* d_distance = nullptr;
 
@@ -698,18 +698,30 @@ TEST(TestSearch, GpuEnhanceLinkBaseline) {
   // 128);
 
   cudaMalloc(&d_graph, degree * base_num * sizeof(uint32_t));
+  cudaCheckError();
+
   cudaMalloc(&d_base_data, dim * base_num * sizeof(float));
+  cudaCheckError();
+
   // cudaMalloc(&d_query_data, dim * query_num * sizeof(float));
   cudaMalloc(&d_result, topk * base_num * sizeof(uint32_t));
+  cudaCheckError();
+
   cudaMalloc(&d_hashtables,
              global_warp_num * hashtable_size * sizeof(uint32_t));
   // cudaMalloc(&d_enterpoints, enter_points_num * sizeof(uint32_t));
   // cudaMalloc(&d_distance, Km * base_num * sizeof(float));
+  cudaCheckError();
 
   cudaMemcpy(d_graph, host_graph.data(), degree * base_num * sizeof(uint32_t),
              cudaMemcpyHostToDevice);
+  cudaCheckError();
+
   cudaMemcpy(d_base_data, host_data.data(), dim * base_num * sizeof(float),
              cudaMemcpyHostToDevice);
+
+  cudaCheckError();
+
   // cudaMemcpy(d_enterpoints, host_enter_points.data(),
   //            enter_points_num * sizeof(uint32_t), cudaMemcpyHostToDevice);
   // cudaMemcpy(d_query_data, host_query.data(), dim * query_num *
@@ -777,7 +789,7 @@ TEST(TestSearch, GpuEnhanceLinkV0) {
   constexpr uint32_t base_num = 10 * 1000 * 1000;
   constexpr uint32_t query_num = 10000;
   constexpr uint32_t grid_size = 144;
-  constexpr uint32_t block_size = 512;
+  constexpr uint32_t block_size = 1024;
   constexpr uint32_t Km = 32;
   constexpr uint32_t Kp = 2;
   constexpr uint32_t Kd = 16;
@@ -787,8 +799,7 @@ TEST(TestSearch, GpuEnhanceLinkV0) {
   // constexpr uint32_t enter_points_num = 32;
   constexpr uint32_t shared_memory_size =
       (block_size / 32) *
-      sizeof(
-          search_warp_state_global_hashtable<uint32_t, float, dim, Km, Kp, Kd>);
+      sizeof(search_warp_state_v0<uint32_t, float, dim, Km, Kp, Kd>);
 
   constexpr uint32_t global_warp_num = grid_size * block_size / 32;
 
@@ -869,10 +880,9 @@ TEST(TestSearch, GpuEnhanceLinkV0) {
   // cudaCheckError();
 
   SPDLOG_INFO("begin gpu searching");
-  link_process_global_hashtable<grid_size, block_size, base_num, query_num, dim,
-                                degree, shared_memory_size, Km, Kp, Kd, topk,
-                                0XFFFFFFFF, hashtable_size, reset_iter,
-                                uint32_t, float>
+  link_process_v0<grid_size, block_size, base_num, query_num, dim, degree,
+                  shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF,
+                  hashtable_size, reset_iter, uint32_t, float>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_hashtables,
                                                       d_graph, d_result);
 
@@ -890,9 +900,8 @@ TEST(TestSearch, GpuEnhanceLinkV0) {
 
   cudaCheckError();
 
-  dump_vec2_file(
-      check_res,
-      "/home/shiwen/project/GGidxbuild/data/gpu_search_res_baseline.ibin");
+  dump_vec2_file(check_res,
+                 "/home/shiwen/project/GGidxbuild/data/gpu_search_res_v0.ibin");
 
   // uint32_t hit = 0;
   // for (auto i = 0; i < query_num; i++) {
