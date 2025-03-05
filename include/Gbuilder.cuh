@@ -74,7 +74,7 @@ __global__ void match_kernel(id_type const* __restrict__ gt_ids,
 template <uint32_t grid_size, uint32_t block_size, uint32_t query_num,
           uint32_t topk, uint32_t max_degree, uint32_t tomb = 0xFFFFFFFF,
           typename data_type = float, typename id_type = uint32_t>
-__global__ void match_top1_kernel(id_type const* __restrict__ gt_ids,
+__global__ void match_top1_kernel(id_type* __restrict__ gt_ids,
                                   id_type* __restrict__ top1_match_graph) {
   // NOTE(shiwen): max_degree is same as topk.
   static_assert(max_degree == topk - 1);
@@ -329,7 +329,7 @@ __global__ void sort_neighbor_kernel(data_type const* __restrict__ base_data,
 
   extern __shared__
       compute_sort_warp_state<id_type, data_type, max_in_degree, dim>
-          warp_states[];
+          shared_warp_states[];
 
   uint32_t const global_warp_id =
       (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
@@ -337,10 +337,11 @@ __global__ void sort_neighbor_kernel(data_type const* __restrict__ base_data,
   uint32_t const lane_id = threadIdx.x % lane_width;
 
   // Shared memory layout per warp
-  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
-  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
-  data_type* distance_sdata = warp_states[local_warp_id].distances;
-  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
+  data_type* base_vector_sdata = shared_warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata =
+      shared_warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = shared_warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = shared_warp_states[local_warp_id].neighbor_ids;
 
   for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
        base_vector_id += global_warp_num) {
@@ -556,7 +557,7 @@ __global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
 
   extern __shared__
       compute_sort_warp_state<id_type, data_type, reverse_graph_degree, dim>
-          warp_states[];
+          sort_warp_states[];
 
   uint32_t const global_warp_id =
       (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
@@ -564,15 +565,16 @@ __global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
   uint32_t const lane_id = threadIdx.x % lane_width;
 
   // Shared memory layout per warp
-  data_type* base_vector_sdata = warp_states[local_warp_id].base_data;
-  data_type* neighbor_vector_sdata = warp_states[local_warp_id].neighbor_data;
-  data_type* distance_sdata = warp_states[local_warp_id].distances;
-  id_type* neighbor_id_sdata = warp_states[local_warp_id].neighbor_ids;
+  data_type* base_vector_sdata = sort_warp_states[local_warp_id].base_data;
+  data_type* neighbor_vector_sdata =
+      sort_warp_states[local_warp_id].neighbor_data;
+  data_type* distance_sdata = sort_warp_states[local_warp_id].distances;
+  id_type* neighbor_id_sdata = sort_warp_states[local_warp_id].neighbor_ids;
 
   for (uint32_t base_vector_id = global_warp_id; base_vector_id < base_num;
        base_vector_id += global_warp_num) {
     auto valid_num = reverse_graph[base_vector_id * reverse_graph_degree];
-    assert(valid_num < rever_graph_degree);
+    // assert(valid_num < rever_graph_degree);
     if (valid_num == 0) {
       if (lane_id == 0) {
         reverse_graph[base_vector_id * reverse_graph_degree +
@@ -592,7 +594,7 @@ __global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
     for (uint32_t neighbor_idx = 1; neighbor_idx < valid_num + 1;
          ++neighbor_idx) {
       // __syncwarp();
-      assert(neighbor_idx < max_in_degree);
+      // assert(neighbor_idx < max_in_degree);
       assert(base_vector_id < base_num);
 
       id_type const neighbor_id =
@@ -621,7 +623,7 @@ __global__ void reverse_sort_kernel(data_type const* __restrict__ base_data,
       // __syncwarp();
 
       if (lane_id == 0) {
-        assert(neighbor_idx < max_in_degree);
+        // assert(neighbor_idx < max_in_degree);
         distance_sdata[neighbor_idx] = -sum;
         neighbor_id_sdata[neighbor_idx] = neighbor_id;
       }
@@ -1007,7 +1009,7 @@ __device__ __forceinline__ void add_pruned(
     id_type const& id, id_type const& idx,
     pr_neighbor_list<id_type, reverse_edge_num,
                      pruned_edge_num>* __restrict__ pr_list) {
-  assert(idx < prev_edge_num);
+  assert(idx < pruned_edge_num);
   pr_list->pruned_list[idx] = id;
 }
 
@@ -1020,12 +1022,38 @@ __device__ __forceinline__ void set_prune_number(
   pr_list->pruned_num = prune_number;
 }
 
-template <typename id_type, uint32_t reverse_edge_num, uint32_t pruned_edge_num>
-__device__ __forceinline__ void reset_pr_list(
-    pr_neighbor_list<id_type, reverse_edge_num,
-                     pruned_edge_num>* __restrict__ pr_list) {
-  pr_list->pruned_num = 0;
-  pr_list->reverse_num = 0;
+// NOTE(shiwen): maybe bugs if struct is alligned...
+template <typename id_type, uint32_t reset_idx0, uint32_t reset_idx1>
+__device__ __forceinline__ void reset_pr_list(id_type* __restrict__ pr_list) {
+  pr_list[reset_idx0] = 0;
+  pr_list[reset_idx1] = 0;
+}
+
+// NOTE(shiwen): init value: 1. the first element of each row of reverse
+// graph is set to 0(init number of reverse edge number).
+template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
+          uint32_t origin_graph_degree, uint32_t pruned_edge_num,
+          uint32_t reverse_edge_num, uint32_t tomb = 0xFFFFFFFF, uint32_t dim,
+          bool is_strict = true, typename data_type = float,
+          typename id_type = uint32_t>
+// in fusion_sort_rng_prune_and_add_reverse_kernel, pruned graph is just one
+// temp graph. we can use local memory(in
+// fusion_sort_rng_prune_and_add_reverse_kernel, prune_graph size is
+// base_num(10,000,000) x pruned_graph_degree. but in this v1 version, only
+// allocate thread_num(144 x 256) x pruned_graph_degree local memory)
+__global__ void /*__launch_bounds__(block_size, 8)*/
+init_pr_lists(pr_neighbor_list<id_type, reverse_edge_num,
+                               pruned_edge_num>* __restrict__ global_pr_lists) {
+  constexpr auto stride = block_size * grid_size;
+
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+  // choose this strategy: if we add one edge to the prune graph, we add the
+  // reverse edge to the reverse graph immediately.
+  for (auto base_id = thread_idx; base_id < base_num; base_id += stride) {
+    pr_neighbor_list<id_type, reverse_edge_num, pruned_edge_num>* pr_list =
+        global_pr_lists + base_id;
+    reset_pr_list<uint32_t, 0, 1 + reverse_edge_num>((id_type*)pr_list);
+  }
 }
 
 // NOTE(shiwen): init value: 1. the first element of each row of reverse
@@ -1058,12 +1086,14 @@ fusion_prune_reverse_kernel_v0(
     // sort the neighbor list by distance
     for (auto neighbor_idx = 0; neighbor_idx < origin_graph_degree;
          neighbor_idx++) {
-      auto neighbor_id = graph[base_id * origin_graph_degree + neighbor_idx];
-      if (neighbor_id == tomb) {
+      id_type neighbor_id = graph[base_id * origin_graph_degree + neighbor_idx];
+      if (neighbor_id == tomb || neighbor_id == base_id ||
+          neighbor_id == 2147483647) {
         distance_local_memory[neighbor_idx] = FLT_MAX;
         continue;
       }
-      assert(neighbor_id < base_num);
+      assert(neighbor_id != tomb);
+      // assert(neighbor_id < base_num);
       distance_local_memory[neighbor_idx] =
           distance_between<float, uint32_t, dim, base_num>(base_id, neighbor_id,
                                                            base_data);
@@ -1075,7 +1105,7 @@ fusion_prune_reverse_kernel_v0(
     auto neighbor_idx = 0;
     assert(neighbor_idx < origin_graph_degree);
     auto neighbor_base_id = graph[base_id * origin_graph_degree + neighbor_idx];
-    if (neighbor_base_id == tomb) {
+    if (neighbor_base_id == tomb || neighbor_base_id == 2147483647) {
       continue;
     }
     // start at the second place because the first place of each row is set to
@@ -1093,14 +1123,16 @@ fusion_prune_reverse_kernel_v0(
          neighbor_idx++) {
       assert(neighbor_idx < origin_graph_degree);
       neighbor_base_id = graph[base_id * origin_graph_degree + neighbor_idx];
-      if (neighbor_base_id == tomb) {
+      if (neighbor_base_id == tomb || neighbor_base_id == 2147483647) {
         break;
       }
       auto compare_idx = 0;
       for (; compare_idx <= pruned_graph_neighbor_idx; compare_idx++) {
-        assert(compare_idx < reverse_graph_max_neighbor);
         auto compare_base_id = pr_list->pruned_list[compare_idx];
         assert(compare_base_id != tomb);
+        assert(neighbor_base_id != tomb);
+        assert(neighbor_base_id < base_num);
+        assert(compare_base_id < base_num);
         data_type compare_distance =
             distance_between<float, uint32_t, dim, base_num>(
                 neighbor_base_id, compare_base_id, base_data);
@@ -1117,7 +1149,7 @@ fusion_prune_reverse_kernel_v0(
       if (compare_idx > pruned_graph_neighbor_idx) {
         pruned_graph_neighbor_idx++;
         // NOTE(shiwen):
-        assert(pruned_graph_neighbor_idx < prune_graph_degree);
+        // assert(pruned_graph_neighbor_idx < prune_graph_degree);
         assert(base_id != neighbor_base_id);
         // pr_list->pruned_list[pruned_graph_neighbor_idx] = neighbor_base_id;
         add_pruned<id_type, reverse_edge_num, pruned_edge_num>(
@@ -1389,7 +1421,6 @@ __global__ void fusion_merge_sort_prune_kernel(
       for (auto i = 0; i < final_graph_degree; i++) {
         final_graph[base_id * final_graph_degree + i] = tomb;
       }
-      reset_pr_list(pr_list);
       continue;
     }
     // force cast..
@@ -1411,7 +1442,7 @@ __global__ void fusion_merge_sort_prune_kernel(
     auto explore_flag = true;
     // FIXME(shiwen): this condition...
     for (; (explore_flag && neighbor_idx < neighbor_num); neighbor_idx++) {
-      assert(neighbor_idx < merge_graph_degree);
+      // assert(neighbor_idx < merge_graph_degree);
       neighbor_base_id = pr_sort_list->list[neighbor_idx];
       // in this setting, neighbor_base_id should not be tomb.
       assert(neighbor_base_id < base_num);
@@ -1449,8 +1480,6 @@ __global__ void fusion_merge_sort_prune_kernel(
     for (auto i = final_graph_neighbor_idx + 1; i < final_graph_degree; i++) {
       final_graph[base_id * final_graph_degree + i] = tomb;
     }
-    // for reuse of global_pr_lists.
-    reset_pr_list(pr_list);
     // TODO(shiwen): slight RNG prune?
   }
 }

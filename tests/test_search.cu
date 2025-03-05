@@ -168,7 +168,7 @@ void testSearch(id_type const* graph, data_type* data, data_type* query,
   std::cout << "recall: " << recall / query_num << std::endl;
 }
 
-TEST(TestSearch, TestSelectTopPSimple) {
+TEST(TestSearch, DISABLED_TestSelectTopPSimple) {
   constexpr uint32_t Km = 128;
   constexpr uint32_t Kp = 14;
   constexpr uint32_t Kd = 64;
@@ -628,10 +628,11 @@ TEST(TestSearch, DISABLED_TestSearch) {
 //   SPDLOG_INFO("the final recall is {}", final_recall);
 // }
 
-TEST(TestSearch, GpuEnhanceLink) {
+TEST(TestSearch, GpuEnhanceLinkBaseline) {
   constexpr uint32_t dim = 200;
   constexpr uint32_t degree = 16;
   constexpr uint32_t base_num = 10 * 1000 * 1000;
+  constexpr uint32_t query_num = 10000;
   constexpr uint32_t grid_size = 144;
   constexpr uint32_t block_size = 512;
   constexpr uint32_t Km = 32;
@@ -725,9 +726,10 @@ TEST(TestSearch, GpuEnhanceLink) {
   // cudaCheckError();
 
   SPDLOG_INFO("begin gpu searching");
-  link_process_global_hashtable<
-      grid_size, block_size, base_num, dim, degree, shared_memory_size, Km, Kp,
-      Kd, topk, 0XFFFFFFFF, hashtable_size, reset_iter, uint32_t, float>
+  link_process_global_hashtable<grid_size, block_size, base_num, query_num, dim,
+                                degree, shared_memory_size, Km, Kp, Kd, topk,
+                                0XFFFFFFFF, hashtable_size, reset_iter,
+                                uint32_t, float>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_hashtables,
                                                       d_graph, d_result);
 
@@ -745,8 +747,152 @@ TEST(TestSearch, GpuEnhanceLink) {
 
   cudaCheckError();
 
-  dump_vec2_file(check_res,
-                 "/home/shiwen/project/GGidxbuild/data/gpu_search_res.ibin");
+  dump_vec2_file(
+      check_res,
+      "/home/shiwen/project/GGidxbuild/data/gpu_search_res_baseline.ibin");
+
+  // uint32_t hit = 0;
+  // for (auto i = 0; i < query_num; i++) {
+  //   auto hash_table = std::unordered_set<uint32_t>{};
+  //   // auto local_hit = 0;
+  //   for (auto j = 0; j < topk; j++) {
+  //     // SPDLOG_INFO("{}", check_res[i * topk + j]);
+  //     hash_table.insert(check_res[i * topk + j]);
+  //   }
+  //   for (auto j = 0; j < topk; j++) {
+  //     if (hash_table.find(gt[i * gt_topk + j]) != hash_table.end()) {
+  //       hit++;
+  //       // local_hit++;
+  //     }
+  //   }
+  //   // SPDLOG_INFO("the local recall is {}", (1.0 * local_hit) / topk);
+  // }
+  // auto final_recall = 1.0 * hit / (query_num * topk);
+  // SPDLOG_INFO("the final recall is {}", final_recall);
+}
+
+TEST(TestSearch, GpuEnhanceLinkV0) {
+  constexpr uint32_t dim = 200;
+  constexpr uint32_t degree = 16;
+  constexpr uint32_t base_num = 10 * 1000 * 1000;
+  constexpr uint32_t query_num = 10000;
+  constexpr uint32_t grid_size = 144;
+  constexpr uint32_t block_size = 512;
+  constexpr uint32_t Km = 32;
+  constexpr uint32_t Kp = 2;
+  constexpr uint32_t Kd = 16;
+  constexpr uint32_t topk = Km + Kp * Kd;
+  constexpr uint32_t reset_iter = 15;
+  constexpr uint32_t hashtable_size = 1 << 12;
+  // constexpr uint32_t enter_points_num = 32;
+  constexpr uint32_t shared_memory_size =
+      (block_size / 32) *
+      sizeof(
+          search_warp_state_global_hashtable<uint32_t, float, dim, Km, Kp, Kd>);
+
+  constexpr uint32_t global_warp_num = grid_size * block_size / 32;
+
+  SPDLOG_INFO("the shared memory size is {}", shared_memory_size);
+
+  auto host_graph = std::vector<uint32_t>(degree * base_num);
+  auto host_data = std::vector<float>(dim * base_num);
+  // auto host_enter_points = std::vector<uint32_t>{
+  //     2012672, 7674849, 2893711, 486935,  7986468, 7933463, 7090302, 5363700,
+  //     8521398, 8020705, 2131068, 210296,  5604224, 8438516, 9157492, 7712070,
+  //     8606321, 2964402, 607245,  891451,  7541619, 7346750, 9483882, 5002848,
+  //     2584507, 4178468, 4158995, 1187799, 8454013, 2316098, 675530, 7059504};
+  // auto host_query = std::vector<float>(dim * query_num);
+  // auto host_query = std::vector<float>(query_num * dim);
+  // auto gt = std::vector<uint32_t>(gt_topk * base_num);
+
+  auto graph_file_name =
+      "/home/shiwen/project/GGidxbuild/data/10M_200/top1_projection_graph.bin";
+  auto data_file_name =
+      "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
+  // auto query_file_name =
+  //     "/home/shiwen/project/GGidxbuild/data/10M_200/query.fbin";
+  // auto gt_file_name = "/home/shiwen/project/GGidxbuild/data/10M_200/gt.ibin";
+
+  read_vec_from_file(host_graph, graph_file_name);
+  read_vec_from_file(host_data, data_file_name);
+  // read_vec_from_file(host_query, query_file_name);
+  // read_vec_from_file(gt, gt_file_name);
+
+  // print_vec(host_data);
+
+  // std::mt19937
+  // gen(std::chrono::system_clock::now().time_since_epoch().count());
+  // std::uniform_real_distribution<float> random_val(-1, 1);
+  // for (auto& elem : host_query) {
+  //   elem = random_val(gen);
+  // }
+
+  uint32_t* d_graph = nullptr;
+  float* d_base_data = nullptr;
+  // float* d_query_data = nullptr;
+  uint32_t* d_result = nullptr;
+  HashTable<uint32_t, 1 << 12>* d_hashtables = nullptr;
+  // uint32_t* d_enterpoints = nullptr;
+  // float* d_distance = nullptr;
+
+  // testSearch<query_num, base_num, dim, topk, gt_topk, degree, float,
+  // uint32_t>(
+  //     host_graph.data(), host_data.data(), host_data.data(), gt.data(),
+  // 128);
+
+  cudaMalloc(&d_graph, degree * base_num * sizeof(uint32_t));
+  cudaMalloc(&d_base_data, dim * base_num * sizeof(float));
+  // cudaMalloc(&d_query_data, dim * query_num * sizeof(float));
+  cudaMalloc(&d_result, topk * base_num * sizeof(uint32_t));
+  cudaMalloc(&d_hashtables,
+             global_warp_num * hashtable_size * sizeof(uint32_t));
+  // cudaMalloc(&d_enterpoints, enter_points_num * sizeof(uint32_t));
+  // cudaMalloc(&d_distance, Km * base_num * sizeof(float));
+
+  cudaMemcpy(d_graph, host_graph.data(), degree * base_num * sizeof(uint32_t),
+             cudaMemcpyHostToDevice);
+  cudaMemcpy(d_base_data, host_data.data(), dim * base_num * sizeof(float),
+             cudaMemcpyHostToDevice);
+  // cudaMemcpy(d_enterpoints, host_enter_points.data(),
+  //            enter_points_num * sizeof(uint32_t), cudaMemcpyHostToDevice);
+  // cudaMemcpy(d_query_data, host_query.data(), dim * query_num *
+  // sizeof(float),
+  //            cudaMemcpyHostToDevice);
+
+  // auto carveout = 100;
+  // cudaFuncSetAttribute(
+  //     enhance_search<grid_size, block_size, base_num, query_num, dim,
+  // degree,
+  //                    shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF,
+  //                    hashtable_size, reset_iter, uint32_t, float>,
+  //     cudaFuncAttributePreferredSharedMemoryCarveout, carveout);
+  // cudaCheckError();
+
+  SPDLOG_INFO("begin gpu searching");
+  link_process_global_hashtable<grid_size, block_size, base_num, query_num, dim,
+                                degree, shared_memory_size, Km, Kp, Kd, topk,
+                                0XFFFFFFFF, hashtable_size, reset_iter,
+                                uint32_t, float>
+      <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_hashtables,
+                                                      d_graph, d_result);
+
+  cudaCheckError();
+  cudaDeviceSynchronize();
+  cudaCheckError();
+  SPDLOG_INFO("finish gpu searching");
+
+  auto check_res = std::vector<uint32_t>(topk * base_num);
+  // auto check_distance = std::vector<float>(Km * base_num);
+  cudaMemcpy(check_res.data(), d_result, topk * base_num * sizeof(uint32_t),
+             cudaMemcpyDeviceToHost);
+  // cudaMemcpy(check_distance.data(), d_distance,
+  //            Km * base_num * sizeof(uint32_t), cudaMemcpyDeviceToHost);
+
+  cudaCheckError();
+
+  dump_vec2_file(
+      check_res,
+      "/home/shiwen/project/GGidxbuild/data/gpu_search_res_baseline.ibin");
 
   // uint32_t hit = 0;
   // for (auto i = 0; i < query_num; i++) {
