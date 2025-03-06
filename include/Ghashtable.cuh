@@ -21,20 +21,6 @@ struct HashTable {
     return key & (table_size - 1);
   }
 
-  // TODO(shiwen): discard this...
-  __device__ __forceinline__ bool test_and_set(key_type const& key) {
-    auto slot = hash(key);
-    auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
-    while (old_key != Kempty && old_key != key + 1) {
-      slot = (slot + 1) & (table_size - 1);
-      old_key = atomicCAS(&list_[slot], Kempty, key + 1);
-    }
-    if (old_key == Kempty) {
-      return true;
-    }
-    return false;
-  }
-
   // NOTE(shiwen): poor performance, fix this.
   __device__ __forceinline__ bool warp_level_test_and_set(
       key_type const& key, uint32_t const& lane_id) {
@@ -63,7 +49,42 @@ struct HashTable {
     return __shfl_sync(0XFFFFFFFF, res, 0);
   }
 
-  __device__ __forceinline__ bool thread_level_set(key_type const& key) {
+  __device__ __forceinline__ void thread_level_set(key_type const& key) {
+    auto slot = hash(key);
+    auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+    while (old_key != Kempty && old_key != key + 1) {
+      slot = (slot + 1) & (table_size - 1);
+      old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+    }
+  }
+
+  // NOTE(shiwen): poor performance, fix this.
+  template <uint32_t Km>
+  __device__ __forceinline__ void warp_level_set(
+      uint32_t const* node_id_list_sdata, uint32_t const& lane_id) {
+    if (lane_id == 0) {
+      for (auto i = 0; i < Km; i++) {
+        auto key = node_id_list_sdata[i] & 0X7FFFFFFF;
+        auto slot = hash(key);
+        // auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+        auto old_key = list_[slot];
+        if (old_key == Kempty) {
+          list_[slot] = key + 1;
+        }
+        while (old_key != Kempty && old_key != key + 1) {
+          slot = (slot + 1) & (table_size - 1);
+          // old_key = atomicCAS(&list_[slot], Kempty, key + 1);
+          old_key = list_[slot];
+          if (old_key == Kempty) {
+            list_[slot] = key + 1;
+          }
+        }
+      }
+    }
+  }
+
+  __device__ __forceinline__ bool thread_level_test_and_set(
+      key_type const& key) {
     auto slot = hash(key);
     auto old_key = atomicCAS(&list_[slot], Kempty, key + 1);
     while (old_key != Kempty && old_key != key + 1) {
