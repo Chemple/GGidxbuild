@@ -100,6 +100,40 @@ __global__ void match_top1_kernel(id_type* __restrict__ gt_ids,
   }
 }
 
+// NOTE(shiwen): just for match top1.
+template <uint32_t grid_size, uint32_t block_size, uint32_t query_num,
+          uint32_t topk, uint32_t max_degree, uint32_t match_real_degree,
+          uint32_t tomb = 0xFFFFFFFF, typename data_type = float,
+          typename id_type = uint32_t>
+__global__ void match_top1_kernel_v0(id_type* __restrict__ gt_ids,
+                                     id_type* __restrict__ top1_match_graph) {
+  // NOTE(shiwen): max_degree is same as topk.
+  static_assert(max_degree >= match_real_degree);
+  constexpr auto stride = block_size * grid_size;
+  auto thread_idx = threadIdx.x + block_size * blockIdx.x;
+
+  // TODO(shiwen): use shared memory.
+  for (auto query_idx = thread_idx; query_idx < query_num;
+       query_idx += stride) {
+    auto top1_base_id = gt_ids[query_idx * topk];
+    auto gt_idx = 1;
+    auto neighbor_base_id = gt_ids[query_idx * topk + gt_idx];
+    // top1 match
+    if (atomicCAS(&top1_match_graph[top1_base_id * max_degree], tomb,
+                  neighbor_base_id) == tomb) {
+      for (gt_idx = 2; gt_idx < topk; gt_idx++) {
+        neighbor_base_id = gt_ids[query_idx * topk + gt_idx];
+        auto neighbor_idx = gt_idx - 1;
+        top1_match_graph[top1_base_id * max_degree + neighbor_idx] =
+            neighbor_base_id;
+      }
+      for (auto i = match_real_degree - 1; i < max_degree; i++) {
+        top1_match_graph[top1_base_id * max_degree + i] = tomb;
+      }
+    }
+  }
+}
+
 // // each warp is assigned to calculate all the distance between base_vector_id
 // // and its neighbor.
 // template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
