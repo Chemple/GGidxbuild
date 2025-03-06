@@ -51,19 +51,3 @@ void dump_vec2_file(std::vector<vec_type> const& vec, char const* file_name) {
   outFile.close();
   SPDLOG_INFO("successfully dumped vector to file {}", file_name);
 }
-
-void SaveGraph(std::vector<std::vector<uint32_t>>& graph, const std::string& filename, uint32_t ep, uint32_t num) {
-    std::ofstream out(filename, std::ios::binary | std::ios::out);
-    if (!out.is_open()) {
-        throw std::runtime_error("cannot open file");
-    }
-    out.write((char*)&ep, sizeof(uint32_t));
-    out.write((char*)&num, sizeof(uint32_t));
-    for (uint32_t i = 0; i < num; ++i) {
-        uint32_t nbr_size = graph[i].size();
-        out.write((char*)&nbr_size, sizeof(uint32_t));
-        out.write((char*)graph[i].data(), sizeof(uint32_t) * nbr_size);
-    }
-    std::cout << "Save graph to: " << filename << " done." << std::endl;
-    out.close();
-}
