@@ -491,9 +491,8 @@ std::vector<std::vector<uint32_t>> MatchSup(
 std::vector<std::vector<uint32_t>> FusionNN(
     uint32_t num_base, uint32_t M_nn, float const* data,
     std::vector<std::vector<uint32_t>>& topNN_graph,
-    std::vector<std::vector<uint32_t>>& top64_graph,
-    std::vector<std::vector<uint32_t>>& top32_graph, uint32_t const dimension,
-    int thread_limit) {
+    std::vector<std::vector<std::vector<uint32_t>>>& supply_graphs,
+    uint32_t const dimension, int thread_limit) {
   int original_threads = omp_get_max_threads();
   omp_set_num_threads(thread_limit);
   std::vector<std::vector<uint32_t>> fusionNN_graph(num_base);
@@ -513,27 +512,20 @@ std::vector<std::vector<uint32_t>> FusionNN(
                                data + dimension * base_id, dimension);
       full_set.push_back(SimpleNeighbor(base_id, distance));
     }
-    for (uint32_t& base_id : top64_graph[it_nb]) {
-      if (vis.find(base_id) != vis.end() || base_id == it_nb ||
-          base_id >= num_base)
-        continue;
-      vis.insert(base_id);
-      float distance = compare(data + dimension * it_nb,
-                               data + dimension * base_id, dimension);
-      full_set.push_back(SimpleNeighbor(base_id, distance));
-    }
-    for (uint32_t& base_id : top32_graph[it_nb]) {
-      if (vis.find(base_id) != vis.end() || base_id == it_nb ||
-          base_id >= num_base)
-        continue;
-      vis.insert(base_id);
-      float distance = compare(data + dimension * it_nb,
-                               data + dimension * base_id, dimension);
-      full_set.push_back(SimpleNeighbor(base_id, distance));
+    for (auto& graph : supply_graphs) {
+      for (uint32_t& base_id : graph[it_nb]) {
+        if (vis.find(base_id) != vis.end() || base_id == it_nb ||
+            base_id >= num_base)
+          continue;
+        vis.insert(base_id);
+        float distance = compare(data + dimension * it_nb,
+                                 data + dimension * base_id, dimension);
+        full_set.push_back(SimpleNeighbor(base_id, distance));
+      }
     }
     std::sort(full_set.begin(), full_set.end());
     std::vector<uint32_t> pruned_list;
-    RNGPrune(M_nn * 2, full_set, it_nb, pruned_list, data, false, num_base,
+    RNGPrune(M_nn * 2, full_set, it_nb, pruned_list, data, true, num_base,
              dimension);
 
     fusionNN_graph[it_nb] = pruned_list;
@@ -564,23 +556,18 @@ std::vector<std::vector<uint32_t>> FusionFinal(
     std::vector<SimpleNeighbor> full_set;
     std::set<uint32_t> vis;
     final_set.reserve(M_final);
-    full_set.reserve(70);
-    for (uint32_t j = 0; j < M_supply; j++) {
-      uint32_t base_id = supply_graph_[it_nb * M_supply + j];
-      if (base_id >= num_base) continue;
+    final_graph_[it_nb].reserve(M_final);
+    full_set.reserve(M_final + 80);
+    for (uint32_t& base_id : bipartite_graph_[it_nb]) {
       if (vis.find(base_id) != vis.end() || base_id == it_nb ||
           base_id >= num_base)
         continue;
       vis.insert(base_id);
       float distance = compare(data + dimension * it_nb,
                                data + dimension * base_id, dimension);
-
       full_set.push_back(SimpleNeighbor(base_id, distance));
+      final_graph_[it_nb].push_back(base_id);
     }
-    std::sort(full_set.begin(), full_set.end());
-    RNGPrune(M_supply, full_set, it_nb, final_set, data, false, num_base,
-             dimension);
-    final_graph_[it_nb] = final_set;
     for (uint32_t j = 0; j < M_link; j++) {
       uint32_t base_id = link_graph_[it_nb * M_link + j];
       if (base_id >= num_base) continue;
@@ -590,7 +577,9 @@ std::vector<std::vector<uint32_t>> FusionFinal(
                                data + dimension * base_id, dimension);
       full_set.push_back(SimpleNeighbor(base_id, distance));
     }
-    for (uint32_t& base_id : bipartite_graph_[it_nb]) {
+    for (uint32_t j = 0; j < M_supply; j++) {
+      uint32_t base_id = supply_graph_[it_nb * M_supply + j];
+      if (base_id >= num_base) continue;
       if (vis.find(base_id) != vis.end() || base_id == it_nb ||
           base_id >= num_base)
         continue;
@@ -690,11 +679,11 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t global_warp_num =
       first_round_search_grid_size * first_round_search_block_size / 32;
 
-  constexpr uint32_t first_round_pruned_edge_num = 55;
-  constexpr uint32_t first_round_reverse_edge_num = 71;
+  constexpr uint32_t first_round_pruned_edge_num = 20;
+  constexpr uint32_t first_round_reverse_edge_num = 108;
 
-  constexpr uint32_t second_round_pruned_edge_num = 55;
-  constexpr uint32_t second_round_reverse_edge_num = 71;
+  constexpr uint32_t second_round_pruned_edge_num = 20;
+  constexpr uint32_t second_round_reverse_edge_num = 108;
 
   constexpr uint32_t second_search_query_num = 10000000;
 
@@ -714,7 +703,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t second_global_warp_num =
       second_round_search_grid_size * second_round_search_block_size / 32;
 
-  constexpr uint32_t final_degree = 55;
+  constexpr uint32_t final_degree = 20;
 
   auto basedata_file_name =
       "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
@@ -835,7 +824,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
 
   fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num, match_degree,
                                  pruned_edge_num, reverse_edge_num, tomb, dim,
-                                 true, float, uint32_t>
+                                 false, float, uint32_t>
       <<<grid_size, block_size, 0, compute_stream>>>(
           d_base_data, d_space_128_yy,
           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
@@ -846,7 +835,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
 
   fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
                                  base_num, pruned_edge_num, reverse_edge_num,
-                                 top1_projection_degree, tomb, dim, true, float,
+                                 top1_projection_degree, tomb, dim, false, float,
                                  uint32_t>
       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
           d_base_data,
@@ -883,26 +872,32 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
                 const_cast<uint32_t*>(h_gt_data.data()), ep,
                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
 
-    std::vector<std::vector<uint32_t>> top64_projection_graph =
-        MatchSup(base_num, query_num, 64, gt_degree, 40,
+    std::vector<std::vector<std::vector<uint32_t>>> supply_graphs;
+    std::vector<std::vector<uint32_t>> top2_projection_graph =
+        MatchSup(base_num, query_num, 2, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top3_projection_graph =
+        MatchSup(base_num, query_num, 3, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top5_projection_graph =
+        MatchSup(base_num, query_num, 5, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
 
-    std::vector<std::vector<uint32_t>> top32_projection_graph =
-        MatchSup(base_num, query_num, 32, gt_degree, 40,
-                 const_cast<uint32_t*>(h_gt_data.data()),
-                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
-
+    supply_graphs.push_back(top2_projection_graph);
+    supply_graphs.push_back(top3_projection_graph);
+    supply_graphs.push_back(top5_projection_graph);
     fusionNN_graph =
         FusionNN(base_num, 40, const_cast<float*>(h_base_data.data()),
-                 topnn_projection_graph, top64_projection_graph,
-                 top32_projection_graph, dim, cpu_thread_limit);
+                 topnn_projection_graph, supply_graphs, dim, cpu_thread_limit);
 
     auto match_end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> match_duration = match_end - match_start;
     SPDLOG_INFO("CPU thread: MatchNN completed in {:.2f} seconds",
                 match_duration.count());
-    
+
     statDegree(base_num, fusionNN_graph);
     // 通知主线程CPU工作已完成
     cpu_task_completed.set_value();

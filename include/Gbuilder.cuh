@@ -1197,6 +1197,46 @@ fusion_prune_reverse_kernel_v0(
       }
     }
     // TODO(shiwen): slight RNG prune?
+    // 实现 slight RNG prune
+    if (!is_strict && pruned_graph_neighbor_idx < pruned_edge_num - 1) {
+      // 我们已经添加了 pruned_graph_neighbor_idx + 1 个邻居
+      // 需要补充到 pruned_edge_num 个
+      uint32_t start_neighbor_idx = neighbor_idx;  // 从当前位置继续
+      
+      // 继续遍历剩余的邻居，直到满足pruned_edge_num或没有更多邻居
+      for (neighbor_idx = start_neighbor_idx; 
+           neighbor_idx < origin_graph_degree && 
+           pruned_graph_neighbor_idx < pruned_edge_num - 1; 
+           neighbor_idx++) {
+        
+        neighbor_base_id = graph[base_id * origin_graph_degree + neighbor_idx];
+        
+        // 跳过无效的邻居
+        if (neighbor_base_id == tomb || 
+            neighbor_base_id == base_id || 
+            neighbor_base_id == 2147483647) {
+          continue;
+        }
+        
+        // 检查这个邻居是否已经在pruned_list中
+        bool already_added = false;
+        for (uint32_t i = 0; i <= pruned_graph_neighbor_idx; i++) {
+          if (pr_list->pruned_list[i] == neighbor_base_id) {
+            already_added = true;
+            break;
+          }
+        }
+        
+        // 如果这个邻居还没有添加过，添加它
+        if (!already_added) {
+          pruned_graph_neighbor_idx++;
+          add_pruned<id_type, reverse_edge_num, pruned_edge_num>(
+              neighbor_base_id, pruned_graph_neighbor_idx, pr_list);
+          add_reverse<id_type, reverse_edge_num, pruned_edge_num>(
+              neighbor_base_id, base_id, global_pr_lists);
+        }
+      }
+    }
 
     set_prune_number<id_type, reverse_edge_num, pruned_edge_num>(
         pruned_graph_neighbor_idx + 1, pr_list);
@@ -1515,6 +1555,48 @@ __global__ void fusion_merge_sort_prune_kernel(
       final_graph[base_id * final_graph_degree + i] = tomb;
     }
     // TODO(shiwen): slight RNG prune?
+        // 实现 slight RNG prune
+    if (!is_strict && final_graph_neighbor_idx < final_graph_degree - 1) {
+      // 遍历合并排序后的邻居列表，找出那些尚未添加但有效的邻居
+      // 创建一个标记数组，标记已经添加到final_graph的邻居
+      bool already_added[reverse_edge_num + pruned_edge_num];
+      for (uint32_t i = 0; i < neighbor_num; i++) {
+        already_added[i] = false;
+      }
+      
+      // 标记已经添加的邻居
+      for (uint32_t i = 0; i <= final_graph_neighbor_idx; i++) {
+        auto added_id = final_graph[base_id * final_graph_degree + i];
+        for (uint32_t j = 0; j < neighbor_num; j++) {
+          if (pr_sort_list->list[j] == added_id) {
+            already_added[j] = true;
+            break;
+          }
+        }
+      }
+      
+      // 按照排序顺序添加尚未添加的邻居，直到达到final_graph_degree
+      for (uint32_t i = 0; i < neighbor_num && final_graph_neighbor_idx < final_graph_degree - 1; i++) {
+        if (!already_added[i]) {
+          neighbor_base_id = pr_sort_list->list[i];
+          
+          // 确保不添加无效的邻居或自身
+          if (neighbor_base_id != tomb && 
+              neighbor_base_id != base_id && 
+              neighbor_base_id < base_num) {
+            
+            final_graph_neighbor_idx++;
+            final_graph[base_id * final_graph_degree + final_graph_neighbor_idx] = 
+                neighbor_base_id;
+          }
+        }
+      }
+    }
+    
+    // 将剩余位置填充为tomb值
+    for (auto i = final_graph_neighbor_idx + 1; i < final_graph_degree; i++) {
+      final_graph[base_id * final_graph_degree + i] = tomb;
+    }
   }
 }
 }  // namespace Gpu
