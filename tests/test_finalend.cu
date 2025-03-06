@@ -679,11 +679,11 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t global_warp_num =
       first_round_search_grid_size * first_round_search_block_size / 32;
 
-  constexpr uint32_t first_round_pruned_edge_num = 20;
-  constexpr uint32_t first_round_reverse_edge_num = 108;
+  constexpr uint32_t first_round_pruned_edge_num = 55;
+  constexpr uint32_t first_round_reverse_edge_num = 71;
 
-  constexpr uint32_t second_round_pruned_edge_num = 20;
-  constexpr uint32_t second_round_reverse_edge_num = 108;
+  constexpr uint32_t second_round_pruned_edge_num = 55;
+  constexpr uint32_t second_round_reverse_edge_num = 71;
 
   constexpr uint32_t second_search_query_num = 10000000;
 
@@ -703,7 +703,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t second_global_warp_num =
       second_round_search_grid_size * second_round_search_block_size / 32;
 
-  constexpr uint32_t final_degree = 20;
+  constexpr uint32_t final_degree = 55;
 
   auto basedata_file_name =
       "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
@@ -835,8 +835,8 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
 
   fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
                                  base_num, pruned_edge_num, reverse_edge_num,
-                                 top1_projection_degree, tomb, dim, false, float,
-                                 uint32_t>
+                                 top1_projection_degree, tomb, dim, false,
+                                 float, uint32_t>
       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
           d_base_data,
           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
@@ -885,10 +885,36 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
         MatchSup(base_num, query_num, 5, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top7_projection_graph =
+        MatchSup(base_num, query_num, 7, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top9_projection_graph =
+        MatchSup(base_num, query_num, 9, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top11_projection_graph =
+        MatchSup(base_num, query_num, 11, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top13_projection_graph =
+        MatchSup(base_num, query_num, 13, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top17_projection_graph =
+        MatchSup(base_num, query_num, 17, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
 
     supply_graphs.push_back(top2_projection_graph);
     supply_graphs.push_back(top3_projection_graph);
     supply_graphs.push_back(top5_projection_graph);
+    supply_graphs.push_back(top7_projection_graph);
+    supply_graphs.push_back(top9_projection_graph);
+    supply_graphs.push_back(top11_projection_graph);
+    supply_graphs.push_back(top13_projection_graph);
+    supply_graphs.push_back(top17_projection_graph);
+
     fusionNN_graph =
         FusionNN(base_num, 40, const_cast<float*>(h_base_data.data()),
                  topnn_projection_graph, supply_graphs, dim, cpu_thread_limit);
