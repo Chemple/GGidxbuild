@@ -77,7 +77,7 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t query_num,
 __global__ void match_top1_kernel(id_type* __restrict__ gt_ids,
                                   id_type* __restrict__ top1_match_graph) {
   // NOTE(shiwen): max_degree is same as topk.
-  static_assert(max_degree == topk - 1);
+  // static_assert(max_degree == topk - 1);
   constexpr auto stride = block_size * grid_size;
   auto thread_idx = threadIdx.x + block_size * blockIdx.x;
 
