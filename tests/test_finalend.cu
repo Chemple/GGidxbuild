@@ -665,7 +665,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t query_num = 10000000;
 
   constexpr uint32_t first_round_search_grid_size = 144;
-  constexpr uint32_t first_round_search_block_size = 1024;
+  constexpr uint32_t first_round_search_block_size = 512 + 256;
   constexpr uint32_t Km = 32;
   constexpr uint32_t Kp = 2;
   constexpr uint32_t Kd = 16;
@@ -674,7 +674,8 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t hashtable_size = 1 << 12;
   constexpr uint32_t shared_memory_size =
       (first_round_search_block_size / 32) *
-      sizeof(search_warp_state_v0<uint32_t, float, dim, Km, Kp, Kd>);
+      sizeof(
+          search_warp_state_store_base_data<uint32_t, float, dim, Km, Kp, Kd>);
 
   constexpr uint32_t global_warp_num =
       first_round_search_grid_size * first_round_search_block_size / 32;
@@ -688,7 +689,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t second_search_query_num = 10000000;
 
   constexpr uint32_t second_round_search_grid_size = 144;
-  constexpr uint32_t second_round_search_block_size = 1024;
+  constexpr uint32_t second_round_search_block_size = 512 + 256;
   constexpr uint32_t second_Km = 32;
   constexpr uint32_t second_Kp = 2;
   constexpr uint32_t second_Kd = 16;
@@ -697,8 +698,8 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t second_hashtable_size = 1 << 12;
   constexpr uint32_t second_shared_memory_size =
       (second_round_search_block_size / 32) *
-      sizeof(search_warp_state_v0<uint32_t, float, dim, second_Km, second_Kp,
-                                  second_Kd>);
+      sizeof(search_warp_state_store_base_data<uint32_t, float, dim, second_Km,
+                                               second_Kp, second_Kd>);
 
   constexpr uint32_t second_global_warp_num =
       second_round_search_grid_size * second_round_search_block_size / 32;
@@ -930,10 +931,10 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   });
 
   // 4. GPU继续执行第二阶段 - 两轮link
-  link_process_v0<first_round_search_grid_size, first_round_search_block_size,
-                  base_num, query_num, dim, top1_projection_degree,
-                  shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF,
-                  hashtable_size, reset_iter, uint32_t, float>
+  link_process_v0_store_base_data<
+      first_round_search_grid_size, first_round_search_block_size, base_num,
+      query_num, dim, top1_projection_degree, shared_memory_size, Km, Kp, Kd,
+      topk, 0XFFFFFFFF, hashtable_size, reset_iter, uint32_t, float>
       <<<first_round_search_grid_size, first_round_search_block_size,
          shared_memory_size, compute_stream>>>(
           d_base_data, d_hashtables, d_top1_projection, d_space_128_xx);
@@ -963,11 +964,11 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
                             first_round_pruned_edge_num>*)d_space_128_yy,
           d_space_128_xx);
 
-  link_process_v0<second_round_search_grid_size, second_round_search_block_size,
-                  base_num, query_num, dim, final_degree,
-                  second_shared_memory_size, second_Km, second_Kp, second_Kd,
-                  second_topk, 0XFFFFFFFF, hashtable_size, reset_iter, uint32_t,
-                  float>
+  link_process_v0_store_base_data<
+      second_round_search_grid_size, second_round_search_block_size, base_num,
+      query_num, dim, final_degree, second_shared_memory_size, second_Km,
+      second_Kp, second_Kd, second_topk, 0XFFFFFFFF, hashtable_size, reset_iter,
+      uint32_t, float>
       <<<first_round_search_grid_size, first_round_search_block_size,
          shared_memory_size, compute_stream>>>(
           d_base_data, d_hashtables, d_space_128_xx, (uint32_t*)d_space_128_yy);

@@ -880,9 +880,10 @@ TEST(TestSearch, GpuEnhanceLinkV0) {
   // cudaCheckError();
 
   SPDLOG_INFO("begin gpu searching");
-  link_process_v0<grid_size, block_size, base_num, query_num, dim, degree,
-                  shared_memory_size, Km, Kp, Kd, topk, 0XFFFFFFFF,
-                  hashtable_size, reset_iter, uint32_t, float>
+  link_process_v0_store_base_data<grid_size, block_size, base_num, query_num,
+                                  dim, degree, shared_memory_size, Km, Kp, Kd,
+                                  topk, 0XFFFFFFFF, hashtable_size, reset_iter,
+                                  uint32_t, float>
       <<<grid_size, block_size, shared_memory_size>>>(d_base_data, d_hashtables,
                                                       d_graph, d_result);
 
