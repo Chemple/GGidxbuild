@@ -18,8 +18,16 @@ include_directories(${CUDA_INCLUDE_DIRS})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag("-mavx512f" HAS_AVX512)
+if(HAS_AVX512)
+    message(STATUS "AVX-512 is supported by the compiler")
+else()
+    message(FATAL_ERROR "AVX-512 is not supported by the compiler. Please ensure your compiler supports AVX-512.")
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUG")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -DDEBUG -mavx512f -mavx512vl -mavx512dq -mavx512bw -mavx512cd")
 
     # set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xcompiler=-O0,-march=native,-fopenmp,-Wall,-Wno-unknown-pragmas --generate-line-info --ptxas-options=-v,-gencode=arch=compute_86,code=sm_86 -Xcompiler=-fPIC")
     # set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -O0 -g -Xcompiler=-O0,-g,-march=native,-fopenmp,-Wall,-Wno-unknown-pragmas --generate-line-info --ptxas-options=-v,-gencode=arch=compute_86,code=sm_86 -Xcompiler=-fPIC")
@@ -28,7 +36,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -DNDEBUG -mavx512f -mavx512vl -mavx512dq -mavx512bw -mavx512cd")
     
     set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O3 -Xcompiler=-O3,-march=native,-fopenmp,-DNDEBUG,-Wall,-Wno-unknown-pragmas --generate-line-info --ptxas-options=-v,-O3, -gencode=arch=compute_86,code=sm_86 -Xcompiler=-fPIC")
 endif()

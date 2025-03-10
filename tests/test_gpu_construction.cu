@@ -890,7 +890,7 @@ TEST(GpuConstructionTime, TestEnd2EndMeasure) {
       reverse_edge_num + pruned_edge_num + 2;
 
   // search: 👇
-  constexpr uint32_t query_num = 10000000;
+  constexpr uint32_t query_num = base_num;
 
   constexpr uint32_t first_round_search_grid_size = 144;
   constexpr uint32_t first_round_search_block_size = 1024;

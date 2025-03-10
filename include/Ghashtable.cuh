@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <unistd.h>
@@ -103,6 +104,35 @@ struct HashTable {
     constexpr uint32_t lane_width = 32;
     for (auto i = lane_id; i < table_size; i += lane_width) {
       list_[i] = Kempty;
+    }
+  }
+
+  // for thread-level query excution
+  __device__ __forceinline__ void reset_thread_local() {
+    // NOTE(shiwen): the hash table must be allocate in shared memory or local
+    // memory
+    memset(&list_, 0, table_size * sizeof(key_type));
+  }
+
+  // for thread-level query excution
+  __device__ __forceinline__ bool test_and_set_thread_local(
+      key_type const& key) {
+    auto slot = hash(key);
+    auto old_key = list_[slot];
+    if (old_key == Kempty) {
+      list_[slot] = key + 1;
+    }
+    while (old_key != Kempty && old_key != key + 1) {
+      slot = (slot + 1) & (table_size - 1);
+      old_key = list_[slot];
+      if (old_key == Kempty) {
+        list_[slot] = key + 1;
+      }
+    }
+    if (old_key == Kempty) {
+      return true;
+    } else {
+      return false;
     }
   }
 
