@@ -919,18 +919,18 @@ __global__ void __launch_bounds__(block_size) link_process_v0_store_base_data(
 
   extern __shared__
       search_warp_state_store_base_data<id_type, data_type, dim, Km, Kp, Kd>
-          sss_warp_states[];
+          ssss_warp_states[];
 
   uint32_t const global_warp_id =
       (blockIdx.x * blockDim.x + threadIdx.x) / lane_width;
   uint32_t const local_warp_id = threadIdx.x / lane_width;
   uint32_t const lane_id = threadIdx.x % lane_width;
 
-  id_type* node_id_list_sdata = sss_warp_states[local_warp_id].node_id_list_;
+  id_type* node_id_list_sdata = ssss_warp_states[local_warp_id].node_id_list_;
   data_type* node_distance_list_sdata =
-      sss_warp_states[local_warp_id].node_distance_list_;
+      ssss_warp_states[local_warp_id].node_distance_list_;
   data_type* query_base_vector_sdata =
-      sss_warp_states[local_warp_id].query_base_data;
+      ssss_warp_states[local_warp_id].query_base_data;
   HashTable<uint32_t, hash_table_size>* visit_table =
       &hash_tables[global_warp_id];
 

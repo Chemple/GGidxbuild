@@ -643,7 +643,1028 @@ void SaveGraph(std::vector<std::vector<uint32_t>> const& graph,
   SPDLOG_INFO("SaveGraph: Completed in {:.2f} seconds", total_duration.count());
 }
 
-TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
+// TEST(GpuConstructionTime, TestEnd2EndCPUGPU_T2I_10M_200) {
+//   auto test_start_time = std::chrono::high_resolution_clock::now();
+
+//   cudaDeviceReset();
+
+//   // 配置参数
+//   constexpr uint32_t gt_degree = 128;
+//   constexpr uint32_t match_degree = 128;
+//   constexpr uint32_t base_num = 10000000;
+//   constexpr uint32_t dim = 200;
+//   constexpr uint32_t tomb = 0XFFFFFFFF;
+//   constexpr uint32_t reverse_edge_num = 111;
+//   constexpr uint32_t pruned_edge_num = 15;
+//   constexpr uint32_t top1_projection_degree = 16;
+//   constexpr uint32_t num_element_pr_list =
+//       reverse_edge_num + pruned_edge_num + 2;
+//   uint32_t ep = 0;  // ep变量
+
+//   // search相关参数
+//   constexpr uint32_t query_num = 10000000;
+
+//   constexpr uint32_t first_round_search_grid_size = 144;
+//   constexpr uint32_t first_round_search_block_size = 512 + 256;
+//   constexpr uint32_t Km = 32;
+//   constexpr uint32_t Kp = 2;
+//   constexpr uint32_t Kd = 16;
+//   constexpr uint32_t topk = Km + Kp * Kd;
+//   constexpr uint32_t reset_iter = 15;
+//   constexpr uint32_t hashtable_size = 1 << 12;
+//   constexpr uint32_t shared_memory_size =
+//       (first_round_search_block_size / 32) *
+//       sizeof(
+//           search_warp_state_store_base_data<uint32_t, float, dim, Km, Kp,
+//           Kd>);
+
+//   constexpr uint32_t global_warp_num =
+//       first_round_search_grid_size * first_round_search_block_size / 32;
+
+//   constexpr uint32_t first_round_pruned_edge_num = 55;
+//   constexpr uint32_t first_round_reverse_edge_num = 71;
+
+//   constexpr uint32_t second_round_pruned_edge_num = 55;
+//   constexpr uint32_t second_round_reverse_edge_num = 71;
+
+//   constexpr uint32_t second_search_query_num = 10000000;
+
+//   constexpr uint32_t second_round_search_grid_size = 144;
+//   constexpr uint32_t second_round_search_block_size = 512 + 256;
+//   constexpr uint32_t second_Km = 32;
+//   constexpr uint32_t second_Kp = 2;
+//   constexpr uint32_t second_Kd = 16;
+//   constexpr uint32_t second_topk = Km + Kp * Kd;
+//   constexpr uint32_t second_reset_iter = 15;
+//   constexpr uint32_t second_hashtable_size = 1 << 12;
+//   constexpr uint32_t second_shared_memory_size =
+//       (second_round_search_block_size / 32) *
+//       sizeof(search_warp_state_store_base_data<uint32_t, float, dim,
+//       second_Km,
+//                                                second_Kp, second_Kd>);
+
+//   constexpr uint32_t second_global_warp_num =
+//       second_round_search_grid_size * second_round_search_block_size / 32;
+
+//   constexpr uint32_t final_degree = 55;
+
+//   auto basedata_file_name =
+//       "/home/shiwen/project/GGidxbuild/GPU-data/t2i-10M/base.10M_200.fbin";
+//   auto gt_file =
+//       "/home/shiwen/project/GGidxbuild/GPU-data/t2i-10M/gt.train.10M_128.ibin";
+
+//   // CPU线程数限制
+//   int max_threads = omp_get_max_threads();
+//   int cpu_thread_limit = std::min(max_threads, 64);  // 限制最大线程数为64
+
+//   // 读取数据
+//   auto data_load_start = std::chrono::high_resolution_clock::now();
+
+//   auto h_gt_data = std::vector<uint32_t>(base_num * gt_degree);
+//   auto h_base_data = std::vector<float>(base_num * dim);
+
+//   read_vec_from_file(h_gt_data, gt_file);
+//   read_vec_from_file(h_base_data, basedata_file_name);
+
+//   auto data_load_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> data_load_duration =
+//       data_load_end - data_load_start;
+//   SPDLOG_INFO("Data loading completed in {:.2f} seconds",
+//               data_load_duration.count());
+
+//   // 预先声明需要的变量
+//   auto h_projection = std::vector<uint32_t>(base_num *
+//   top1_projection_degree); auto h_second_round_search_merge =
+//       std::vector<uint32_t>(base_num * final_degree);
+//   std::vector<std::vector<uint32_t>> fusionNN_graph;
+//   std::vector<std::vector<uint32_t>> final_graph;
+//   std::promise<void> cpu_task_completed;
+//   std::future<void> cpu_future = cpu_task_completed.get_future();
+
+//   // 分配GPU内存
+//   auto gpu_alloc_start = std::chrono::high_resolution_clock::now();
+
+//   float* d_base_data = nullptr;
+//   uint32_t* d_space_128_xx = nullptr;
+//   uint32_t* d_space_128_yy = nullptr;
+//   uint32_t* d_top1_projection = nullptr;
+//   HashTable<uint32_t, 1 << 12>* d_hashtables = nullptr;
+
+//   cudaMalloc(&d_base_data, base_num * dim * sizeof(float));
+//   cudaMalloc(&d_space_128_xx, base_num * gt_degree * sizeof(uint32_t));
+//   cudaMalloc(
+//       &d_space_128_yy,
+//       base_num *
+//           sizeof(
+//               pr_neighbor_list<uint32_t, reverse_edge_num,
+//               pruned_edge_num>));
+//   cudaMalloc(&d_top1_projection,
+//              base_num * top1_projection_degree * sizeof(uint32_t));
+//   cudaMalloc(&d_hashtables,
+//              global_warp_num * hashtable_size * sizeof(uint32_t));
+
+//   auto gpu_alloc_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> gpu_alloc_duration =
+//       gpu_alloc_end - gpu_alloc_start;
+//   SPDLOG_INFO("GPU memory allocation completed in {:.2f} seconds",
+//               gpu_alloc_duration.count());
+
+//   // 创建CUDA流和事件
+//   cudaStream_t compute_stream, copy_stream;
+//   cudaEvent_t data_ready, gpu_phase1_done, gpu_phase2_done;
+
+//   cudaStreamCreate(&compute_stream);
+//   cudaStreamCreate(&copy_stream);
+//   cudaEventCreate(&data_ready);
+//   cudaEventCreate(&gpu_phase1_done);
+//   cudaEventCreate(&gpu_phase2_done);
+
+//   // 总体时间测量事件
+//   cudaEvent_t start, stop;
+//   cudaEventCreate(&start);
+//   cudaEventCreate(&stop);
+
+//   // ===== 开始计时：从这里开始真正的图构建 =====
+//   auto graph_build_start = std::chrono::high_resolution_clock::now();
+//   cudaEventRecord(start, compute_stream);
+
+//   // 1. 异步数据传输到GPU (在copy_stream上)
+//   cudaMemcpyAsync(d_base_data, h_base_data.data(),
+//                   base_num * dim * sizeof(float), cudaMemcpyHostToDevice,
+//                   copy_stream);
+
+//   cudaMemcpyAsync(d_space_128_xx, h_gt_data.data(),
+//                   base_num * gt_degree * sizeof(uint32_t),
+//                   cudaMemcpyHostToDevice, copy_stream);
+
+//   auto h_init_match = std::vector<uint32_t>(base_num * match_degree, tomb);
+
+//   cudaMemcpyAsync(d_space_128_yy, h_init_match.data(),
+//                   base_num * match_degree * sizeof(uint32_t),
+//                   cudaMemcpyHostToDevice, copy_stream);
+
+//   // 标记数据传输完成
+//   cudaEventRecord(data_ready, copy_stream);
+
+//   // 2. GPU计算第一阶段 - top1 projection
+//   cudaStreamWaitEvent(compute_stream, data_ready, 0);
+
+//   // GPU Kernels - 第一阶段 (top1 projection)
+//   constexpr uint32_t match_grid_size = 144;
+//   constexpr uint32_t match_block_size = 512;
+
+//   match_top1_kernel_v0<match_grid_size, match_block_size, base_num,
+//   gt_degree,
+//                        match_degree, 127, tomb, float, uint32_t>
+//       <<<match_grid_size, match_block_size, 0, compute_stream>>>(
+//           d_space_128_xx, d_space_128_yy);
+
+//   constexpr uint32_t grid_size = 144;
+//   constexpr uint32_t block_size = 256;
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//   pruned_edge_num,
+//                 reverse_edge_num, tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx);
+
+//   fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num,
+//   match_degree,
+//                                  pruned_edge_num, reverse_edge_num, tomb,
+//                                  dim, false, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, d_space_128_yy,
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx);
+
+//   constexpr uint32_t projection_grid_size = 144;
+//   constexpr uint32_t projection_block_size = 256;
+
+//   fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
+//                                  base_num, pruned_edge_num, reverse_edge_num,
+//                                  top1_projection_degree, tomb, dim, false,
+//                                  float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx,
+//           d_top1_projection);
+
+//   // 创建计算完成事件等待copy_stream
+//   cudaEvent_t phase1_compute_done;
+//   cudaEventCreate(&phase1_compute_done);
+//   cudaEventRecord(phase1_compute_done, compute_stream);
+
+//   // 确保数据拷贝前计算已完成
+//   cudaStreamWaitEvent(copy_stream, phase1_compute_done, 0);
+
+//   // 在计算完成后异步拷贝投影数据供CPU使用
+//   cudaMemcpyAsync(h_projection.data(), d_top1_projection,
+//                   base_num * top1_projection_degree * sizeof(uint32_t),
+//                   cudaMemcpyDeviceToHost, copy_stream);
+
+//   cudaEventDestroy(phase1_compute_done);
+
+//   // 标记GPU第一阶段完成 - 这个事件用于CPU线程同步
+//   cudaEventRecord(gpu_phase1_done,
+//                   copy_stream);  // 使用copy_stream确保数据拷贝完成
+
+//   // 3. CPU启动单独线程执行MatchNN（与GPU第二阶段并行）
+//   // 创建线程来执行CPU部分的工作，不阻塞主线程
+//   std::thread cpu_worker([&]() {
+//     auto match_start = std::chrono::high_resolution_clock::now();
+//     // 执行MatchNN计算
+//     std::vector<std::vector<uint32_t>> topnn_projection_graph =
+//         MatchNN(base_num, query_num, match_degree, gt_degree, 40,
+//                 const_cast<uint32_t*>(h_gt_data.data()), ep,
+//                 const_cast<float*>(h_base_data.data()), dim,
+//                 cpu_thread_limit);
+
+//     std::vector<std::vector<std::vector<uint32_t>>> supply_graphs;
+//     std::vector<std::vector<uint32_t>> top2_projection_graph =
+//         MatchSup(base_num, query_num, 2, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top3_projection_graph =
+//         MatchSup(base_num, query_num, 3, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top4_projection_graph =
+//         MatchSup(base_num, query_num, 4, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top5_projection_graph =
+//         MatchSup(base_num, query_num, 5, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top6_projection_graph =
+//         MatchSup(base_num, query_num, 6, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top7_projection_graph =
+//         MatchSup(base_num, query_num, 7, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top8_projection_graph =
+//         MatchSup(base_num, query_num, 8, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top9_projection_graph =
+//         MatchSup(base_num, query_num, 9, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top10_projection_graph =
+//         MatchSup(base_num, query_num, 10, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top11_projection_graph =
+//         MatchSup(base_num, query_num, 11, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     supply_graphs.push_back(top2_projection_graph);
+//     supply_graphs.push_back(top3_projection_graph);
+//     supply_graphs.push_back(top4_projection_graph);
+//     supply_graphs.push_back(top5_projection_graph);
+//     supply_graphs.push_back(top6_projection_graph);
+//     supply_graphs.push_back(top7_projection_graph);
+//     supply_graphs.push_back(top8_projection_graph);
+//     supply_graphs.push_back(top9_projection_graph);
+//     supply_graphs.push_back(top10_projection_graph);
+//     supply_graphs.push_back(top11_projection_graph);
+
+//     fusionNN_graph =
+//         FusionNN(base_num, 40, const_cast<float*>(h_base_data.data()),
+//                  topnn_projection_graph, supply_graphs, dim,
+//                  cpu_thread_limit);
+
+//     auto match_end = std::chrono::high_resolution_clock::now();
+//     std::chrono::duration<double> match_duration = match_end - match_start;
+//     SPDLOG_INFO("CPU thread: MatchNN completed in {:.2f} seconds",
+//                 match_duration.count());
+
+//     statDegree(base_num, fusionNN_graph);
+//     // 通知主线程CPU工作已完成
+//     cpu_task_completed.set_value();
+//   });
+
+//   // 4. GPU继续执行第二阶段 - 两轮link
+//   link_process_v0_store_base_data<
+//       first_round_search_grid_size, first_round_search_block_size, base_num,
+//       query_num, dim, top1_projection_degree, shared_memory_size, Km, Kp, Kd,
+//       topk, 0XFFFFFFFF, hashtable_size, reset_iter, uint32_t, float>
+//       <<<first_round_search_grid_size, first_round_search_block_size,
+//          shared_memory_size, compute_stream>>>(
+//           d_base_data, d_hashtables, d_top1_projection, d_space_128_xx);
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//                 first_round_pruned_edge_num, first_round_reverse_edge_num,
+//                 tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy);
+
+//   fusion_prune_reverse_kernel_v0<
+//       grid_size, block_size, base_num, topk, first_round_pruned_edge_num,
+//       first_round_reverse_edge_num, tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, d_space_128_xx,
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy);
+
+//   fusion_merge_sort_prune_kernel<grid_size, block_size, base_num,
+//                                  first_round_pruned_edge_num,
+//                                  first_round_reverse_edge_num, final_degree,
+//                                  tomb, dim, true, float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy,
+//           d_space_128_xx);
+
+//   link_process_v0_store_base_data<
+//       second_round_search_grid_size, second_round_search_block_size,
+//       base_num, query_num, dim, final_degree, second_shared_memory_size,
+//       second_Km, second_Kp, second_Kd, second_topk, 0XFFFFFFFF,
+//       hashtable_size, reset_iter, uint32_t, float>
+//       <<<first_round_search_grid_size, first_round_search_block_size,
+//          shared_memory_size, compute_stream>>>(
+//           d_base_data, d_hashtables, d_space_128_xx,
+//           (uint32_t*)d_space_128_yy);
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//                 second_round_pruned_edge_num, second_round_reverse_edge_num,
+//                 tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx);
+
+//   fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num,
+//   second_topk,
+//                                  second_round_pruned_edge_num,
+//                                  second_round_reverse_edge_num, tomb, dim,
+//                                  true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, (uint32_t*)d_space_128_yy,
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx);
+
+//   fusion_merge_sort_prune_kernel<grid_size, block_size, base_num,
+//                                  second_round_pruned_edge_num,
+//                                  second_round_reverse_edge_num, final_degree,
+//                                  tomb, dim, true, float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx,
+//           (uint32_t*)d_space_128_yy);
+
+//   // 第二阶段完成，准备数据传输
+//   cudaEvent_t compute_done;
+//   cudaEventCreate(&compute_done);
+//   cudaEventRecord(compute_done, compute_stream);
+
+//   // 确保数据拷贝前计算已完成
+//   cudaStreamWaitEvent(copy_stream, compute_done, 0);
+
+//   // 5. 异步拷贝最终结果给CPU使用
+//   cudaMemcpyAsync(h_second_round_search_merge.data(),
+//   (uint32_t*)d_space_128_yy,
+//                   base_num * final_degree * sizeof(uint32_t),
+//                   cudaMemcpyDeviceToHost, copy_stream);
+
+//   cudaEventDestroy(compute_done);
+
+//   // 标记GPU第二阶段完成 - 这个事件用于CPU同步
+//   cudaEventRecord(gpu_phase2_done, copy_stream);
+
+//   // 6. 等待GPU和CPU任务都完成
+//   // 创建一个单独的标志来跟踪GPU和CPU完成状态
+//   bool gpu_done = false;
+//   bool cpu_done = false;
+//   auto gpu_wait_start = std::chrono::high_resolution_clock::now();
+
+//   // 使用future的wait_for来检查CPU任务是否完成
+//   while (!gpu_done || !cpu_done) {
+//     if (!gpu_done && cudaEventQuery(gpu_phase2_done) == cudaSuccess) {
+//       gpu_done = true;
+//       auto gpu_wait_end = std::chrono::high_resolution_clock::now();
+//       std::chrono::duration<double> gpu_wait_duration =
+//           gpu_wait_end - gpu_wait_start;
+//       SPDLOG_INFO("GPU tasks completed in {:.2f} seconds",
+//                   gpu_wait_duration.count());
+//     }
+
+//     if (!cpu_done && cpu_future.wait_for(std::chrono::microseconds(100)) ==
+//                          std::future_status::ready) {
+//       cpu_done = true;
+//       SPDLOG_INFO("CPU tasks completed");
+//     }
+
+//     // 短暂睡眠以避免忙等待
+//     std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//   }
+
+//   // 确保CPU线程已经完成
+//   if (cpu_worker.joinable()) {
+//     cpu_worker.join();
+//   }
+
+//   // 7. 执行最终的融合阶段
+//   auto fusion_start = std::chrono::high_resolution_clock::now();
+
+//   final_graph = FusionFinal(base_num, top1_projection_degree, final_degree,
+//   70,
+//                             const_cast<float*>(h_base_data.data()),
+//                             h_projection, fusionNN_graph,
+//                             h_second_round_search_merge, dim,
+//                             cpu_thread_limit);
+
+//   auto fusion_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> fusion_duration = fusion_end - fusion_start;
+//   SPDLOG_INFO("FusionFinal completed in {:.2f} seconds",
+//               fusion_duration.count());
+
+//   // 停止GPU计时
+//   cudaEventRecord(stop, compute_stream);
+//   cudaEventSynchronize(stop);
+
+//   // 计算建图总时间
+//   auto graph_build_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> graph_build_duration =
+//       graph_build_end - graph_build_start;
+//   SPDLOG_INFO("Total graph building time: {:.2f} seconds",
+//               graph_build_duration.count());
+
+//   float gpu_milliseconds = 0;
+//   cudaEventElapsedTime(&gpu_milliseconds, start, stop);
+//   SPDLOG_INFO("GPU kernel execution time: {:.3f} seconds",
+//               gpu_milliseconds / 1000);
+
+//   // 8. 保存最终图（不计入建图时间）
+//   auto save_start = std::chrono::high_resolution_clock::now();
+
+//   SaveGraph(
+//       final_graph,
+//       "/home/shiwen/project/GGidxbuild/GPU-data/t2i-10M/saved_graph_match_10",
+//       ep, base_num);
+
+//   auto save_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> save_duration = save_end - save_start;
+//   SPDLOG_INFO("Graph saving completed in {:.2f} seconds",
+//               save_duration.count());
+
+//   statDegree(base_num, final_graph);
+//   statDegree(base_num, top1_projection_degree, h_projection);
+//   statDegree(base_num, final_degree, h_second_round_search_merge);
+
+//   // 清理资源
+//   cudaStreamDestroy(compute_stream);
+//   cudaStreamDestroy(copy_stream);
+//   cudaEventDestroy(data_ready);
+//   cudaEventDestroy(gpu_phase1_done);
+//   cudaEventDestroy(gpu_phase2_done);
+//   cudaEventDestroy(start);
+//   cudaEventDestroy(stop);
+
+//   cudaFree(d_base_data);
+//   cudaFree(d_space_128_xx);
+//   cudaFree(d_space_128_yy);
+//   cudaFree(d_top1_projection);
+//   cudaFree(d_hashtables);
+
+//   auto test_end_time = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> test_duration = test_end_time -
+//   test_start_time; SPDLOG_INFO("Total test execution time: {:.2f} seconds",
+//               test_duration.count());
+//   SPDLOG_INFO("Pure graph construction time: {:.2f} seconds",
+//               graph_build_duration.count());
+// }
+
+// TEST(GpuConstructionTime, TestEnd2EndCPUGPU_Laion_1M_512) {
+//   auto test_start_time = std::chrono::high_resolution_clock::now();
+
+//   cudaDeviceReset();
+
+//   // 配置参数
+//   constexpr uint32_t gt_degree = 128;
+//   constexpr uint32_t match_degree = 128;
+//   constexpr uint32_t base_num = 1 * 1000 * 1000;
+//   constexpr uint32_t dim = 512;
+//   constexpr uint32_t tomb = 0XFFFFFFFF;
+//   constexpr uint32_t reverse_edge_num = 111;
+//   constexpr uint32_t pruned_edge_num = 15;
+//   constexpr uint32_t top1_projection_degree = 16;
+//   constexpr uint32_t num_element_pr_list =
+//       reverse_edge_num + pruned_edge_num + 2;
+//   uint32_t ep = 0;  // ep变量
+
+//   // search相关参数
+//   constexpr uint32_t query_num = base_num;
+
+//   constexpr uint32_t first_round_search_grid_size = 144;
+//   constexpr uint32_t first_round_search_block_size = 512;
+//   constexpr uint32_t Km = 32;
+//   constexpr uint32_t Kp = 2;
+//   constexpr uint32_t Kd = 16;
+//   constexpr uint32_t topk = Km + Kp * Kd;
+//   constexpr uint32_t reset_iter = 15;
+//   constexpr uint32_t hashtable_size = 1 << 12;
+//   constexpr uint32_t shared_memory_size =
+//       (first_round_search_block_size / 32) *
+//       sizeof(
+//           search_warp_state_store_base_data<uint32_t, float, dim, Km, Kp,
+//           Kd>);
+
+//   constexpr uint32_t global_warp_num =
+//       first_round_search_grid_size * first_round_search_block_size / 32;
+
+//   constexpr uint32_t first_round_pruned_edge_num = 55;
+//   constexpr uint32_t first_round_reverse_edge_num = 71;
+
+//   constexpr uint32_t second_round_pruned_edge_num = 55;
+//   constexpr uint32_t second_round_reverse_edge_num = 71;
+
+//   constexpr uint32_t second_search_query_num = base_num;
+
+//   constexpr uint32_t second_round_search_grid_size = 144;
+//   constexpr uint32_t second_round_search_block_size = 512;
+//   constexpr uint32_t second_Km = 32;
+//   constexpr uint32_t second_Kp = 2;
+//   constexpr uint32_t second_Kd = 16;
+//   constexpr uint32_t second_topk = Km + Kp * Kd;
+//   constexpr uint32_t second_reset_iter = 15;
+//   constexpr uint32_t second_hashtable_size = 1 << 12;
+//   constexpr uint32_t second_shared_memory_size =
+//       (second_round_search_block_size / 32) *
+//       sizeof(search_warp_state_store_base_data<uint32_t, float, dim,
+//       second_Km,
+//                                                second_Kp, second_Kd>);
+
+//   constexpr uint32_t second_global_warp_num =
+//       second_round_search_grid_size * second_round_search_block_size / 32;
+
+//   constexpr uint32_t final_degree = 55;
+
+//   auto basedata_file_name =
+//       "/home/shiwen/project/GGidxbuild/GPU-data/laion-1M/base.1M_512.fbin";
+//   auto gt_file =
+//       "/home/shiwen/project/GGidxbuild/GPU-data/laion-1M/gt.train.1M_128.ibin";
+
+//   // CPU线程数限制
+//   int max_threads = omp_get_max_threads();
+//   int cpu_thread_limit = std::min(max_threads, 64);  // 限制最大线程数为64
+
+//   // 读取数据
+//   auto data_load_start = std::chrono::high_resolution_clock::now();
+
+//   auto h_gt_data = std::vector<uint32_t>(base_num * gt_degree);
+//   auto h_base_data = std::vector<float>(base_num * dim);
+
+//   read_vec_from_file(h_gt_data, gt_file);
+//   read_vec_from_file(h_base_data, basedata_file_name);
+
+//   auto data_load_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> data_load_duration =
+//       data_load_end - data_load_start;
+//   SPDLOG_INFO("Data loading completed in {:.2f} seconds",
+//               data_load_duration.count());
+
+//   // 预先声明需要的变量
+//   auto h_projection = std::vector<uint32_t>(base_num *
+//   top1_projection_degree); auto h_second_round_search_merge =
+//       std::vector<uint32_t>(base_num * final_degree);
+//   std::vector<std::vector<uint32_t>> fusionNN_graph;
+//   std::vector<std::vector<uint32_t>> final_graph;
+//   std::promise<void> cpu_task_completed;
+//   std::future<void> cpu_future = cpu_task_completed.get_future();
+
+//   // 分配GPU内存
+//   auto gpu_alloc_start = std::chrono::high_resolution_clock::now();
+
+//   float* d_base_data = nullptr;
+//   uint32_t* d_space_128_xx = nullptr;
+//   uint32_t* d_space_128_yy = nullptr;
+//   uint32_t* d_top1_projection = nullptr;
+//   HashTable<uint32_t, 1 << 12>* d_hashtables = nullptr;
+
+//   cudaMalloc(&d_base_data, base_num * dim * sizeof(float));
+//   cudaMalloc(&d_space_128_xx, base_num * gt_degree * sizeof(uint32_t));
+//   cudaMalloc(
+//       &d_space_128_yy,
+//       base_num *
+//           sizeof(
+//               pr_neighbor_list<uint32_t, reverse_edge_num,
+//               pruned_edge_num>));
+//   cudaMalloc(&d_top1_projection,
+//              base_num * top1_projection_degree * sizeof(uint32_t));
+//   cudaMalloc(&d_hashtables,
+//              global_warp_num * hashtable_size * sizeof(uint32_t));
+
+//   auto gpu_alloc_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> gpu_alloc_duration =
+//       gpu_alloc_end - gpu_alloc_start;
+//   SPDLOG_INFO("GPU memory allocation completed in {:.2f} seconds",
+//               gpu_alloc_duration.count());
+
+//   // 创建CUDA流和事件
+//   cudaStream_t compute_stream, copy_stream;
+//   cudaEvent_t data_ready, gpu_phase1_done, gpu_phase2_done;
+
+//   cudaStreamCreate(&compute_stream);
+//   cudaStreamCreate(&copy_stream);
+//   cudaEventCreate(&data_ready);
+//   cudaEventCreate(&gpu_phase1_done);
+//   cudaEventCreate(&gpu_phase2_done);
+
+//   // 总体时间测量事件
+//   cudaEvent_t start, stop;
+//   cudaEventCreate(&start);
+//   cudaEventCreate(&stop);
+
+//   // ===== 开始计时：从这里开始真正的图构建 =====
+//   auto graph_build_start = std::chrono::high_resolution_clock::now();
+//   cudaEventRecord(start, compute_stream);
+
+//   // 1. 异步数据传输到GPU (在copy_stream上)
+//   cudaMemcpyAsync(d_base_data, h_base_data.data(),
+//                   base_num * dim * sizeof(float), cudaMemcpyHostToDevice,
+//                   copy_stream);
+
+//   cudaMemcpyAsync(d_space_128_xx, h_gt_data.data(),
+//                   base_num * gt_degree * sizeof(uint32_t),
+//                   cudaMemcpyHostToDevice, copy_stream);
+
+//   auto h_init_match = std::vector<uint32_t>(base_num * match_degree, tomb);
+
+//   cudaMemcpyAsync(d_space_128_yy, h_init_match.data(),
+//                   base_num * match_degree * sizeof(uint32_t),
+//                   cudaMemcpyHostToDevice, copy_stream);
+
+//   // 标记数据传输完成
+//   cudaEventRecord(data_ready, copy_stream);
+
+//   // 2. GPU计算第一阶段 - top1 projection
+//   cudaStreamWaitEvent(compute_stream, data_ready, 0);
+
+//   // GPU Kernels - 第一阶段 (top1 projection)
+//   constexpr uint32_t match_grid_size = 144;
+//   constexpr uint32_t match_block_size = 512;
+
+//   match_top1_kernel_v0<match_grid_size, match_block_size, base_num,
+//   gt_degree,
+//                        match_degree, 127, tomb, float, uint32_t>
+//       <<<match_grid_size, match_block_size, 0, compute_stream>>>(
+//           d_space_128_xx, d_space_128_yy);
+
+//   constexpr uint32_t grid_size = 144;
+//   constexpr uint32_t block_size = 256;
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//   pruned_edge_num,
+//                 reverse_edge_num, tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx);
+
+//   fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num,
+//   match_degree,
+//                                  pruned_edge_num, reverse_edge_num, tomb,
+//                                  dim, false, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, d_space_128_yy,
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx);
+
+//   constexpr uint32_t projection_grid_size = 144;
+//   constexpr uint32_t projection_block_size = 256;
+
+//   fusion_merge_sort_prune_kernel<projection_grid_size, projection_block_size,
+//                                  base_num, pruned_edge_num, reverse_edge_num,
+//                                  top1_projection_degree, tomb, dim, false,
+//                                  float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, reverse_edge_num, pruned_edge_num>*)
+//               d_space_128_xx,
+//           d_top1_projection);
+
+//   // 创建计算完成事件等待copy_stream
+//   cudaEvent_t phase1_compute_done;
+//   cudaEventCreate(&phase1_compute_done);
+//   cudaEventRecord(phase1_compute_done, compute_stream);
+
+//   // 确保数据拷贝前计算已完成
+//   cudaStreamWaitEvent(copy_stream, phase1_compute_done, 0);
+
+//   // 在计算完成后异步拷贝投影数据供CPU使用
+//   cudaMemcpyAsync(h_projection.data(), d_top1_projection,
+//                   base_num * top1_projection_degree * sizeof(uint32_t),
+//                   cudaMemcpyDeviceToHost, copy_stream);
+
+//   cudaEventDestroy(phase1_compute_done);
+
+//   // 标记GPU第一阶段完成 - 这个事件用于CPU线程同步
+//   cudaEventRecord(gpu_phase1_done,
+//                   copy_stream);  // 使用copy_stream确保数据拷贝完成
+
+//   // 3. CPU启动单独线程执行MatchNN（与GPU第二阶段并行）
+//   // 创建线程来执行CPU部分的工作，不阻塞主线程
+//   std::thread cpu_worker([&]() {
+//     auto match_start = std::chrono::high_resolution_clock::now();
+//     // 执行MatchNN计算
+//     std::vector<std::vector<uint32_t>> topnn_projection_graph =
+//         MatchNN(base_num, query_num, match_degree, gt_degree, 40,
+//                 const_cast<uint32_t*>(h_gt_data.data()), ep,
+//                 const_cast<float*>(h_base_data.data()), dim,
+//                 cpu_thread_limit);
+
+//     std::vector<std::vector<std::vector<uint32_t>>> supply_graphs;
+//     std::vector<std::vector<uint32_t>> top2_projection_graph =
+//         MatchSup(base_num, query_num, 2, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top3_projection_graph =
+//         MatchSup(base_num, query_num, 3, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top4_projection_graph =
+//         MatchSup(base_num, query_num, 4, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top5_projection_graph =
+//         MatchSup(base_num, query_num, 5, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top6_projection_graph =
+//         MatchSup(base_num, query_num, 6, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top7_projection_graph =
+//         MatchSup(base_num, query_num, 7, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top8_projection_graph =
+//         MatchSup(base_num, query_num, 8, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top9_projection_graph =
+//         MatchSup(base_num, query_num, 9, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top10_projection_graph =
+//         MatchSup(base_num, query_num, 10, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+//     std::vector<std::vector<uint32_t>> top11_projection_graph =
+//         MatchSup(base_num, query_num, 11, gt_degree, 40,
+//                  const_cast<uint32_t*>(h_gt_data.data()),
+//                  const_cast<float*>(h_base_data.data()), dim,
+//                  cpu_thread_limit);
+
+//     supply_graphs.push_back(top2_projection_graph);
+//     supply_graphs.push_back(top3_projection_graph);
+//     supply_graphs.push_back(top4_projection_graph);
+//     supply_graphs.push_back(top5_projection_graph);
+//     supply_graphs.push_back(top6_projection_graph);
+//     supply_graphs.push_back(top7_projection_graph);
+//     supply_graphs.push_back(top8_projection_graph);
+//     supply_graphs.push_back(top9_projection_graph);
+//     supply_graphs.push_back(top10_projection_graph);
+//     supply_graphs.push_back(top11_projection_graph);
+
+//     fusionNN_graph =
+//         FusionNN(base_num, 40, const_cast<float*>(h_base_data.data()),
+//                  topnn_projection_graph, supply_graphs, dim,
+//                  cpu_thread_limit);
+
+//     auto match_end = std::chrono::high_resolution_clock::now();
+//     std::chrono::duration<double> match_duration = match_end - match_start;
+//     SPDLOG_INFO("CPU thread: MatchNN completed in {:.2f} seconds",
+//                 match_duration.count());
+
+//     statDegree(base_num, fusionNN_graph);
+//     // 通知主线程CPU工作已完成
+//     cpu_task_completed.set_value();
+//   });
+
+//   // 4. GPU继续执行第二阶段 - 两轮link
+//   link_process_v0_store_base_data<
+//       first_round_search_grid_size, first_round_search_block_size, base_num,
+//       query_num, dim, top1_projection_degree, shared_memory_size, Km, Kp, Kd,
+//       topk, 0XFFFFFFFF, hashtable_size, reset_iter, uint32_t, float>
+//       <<<first_round_search_grid_size, first_round_search_block_size,
+//          shared_memory_size, compute_stream>>>(
+//           d_base_data, d_hashtables, d_top1_projection, d_space_128_xx);
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//                 first_round_pruned_edge_num, first_round_reverse_edge_num,
+//                 tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy);
+
+//   fusion_prune_reverse_kernel_v0<
+//       grid_size, block_size, base_num, topk, first_round_pruned_edge_num,
+//       first_round_reverse_edge_num, tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, d_space_128_xx,
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy);
+
+//   fusion_merge_sort_prune_kernel<grid_size, block_size, base_num,
+//                                  first_round_pruned_edge_num,
+//                                  first_round_reverse_edge_num, final_degree,
+//                                  tomb, dim, true, float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, first_round_reverse_edge_num,
+//                             first_round_pruned_edge_num>*)d_space_128_yy,
+//           d_space_128_xx);
+
+//   link_process_v0_store_base_data<
+//       second_round_search_grid_size, second_round_search_block_size,
+//       base_num, query_num, dim, final_degree, second_shared_memory_size,
+//       second_Km, second_Kp, second_Kd, second_topk, 0XFFFFFFFF,
+//       hashtable_size, reset_iter, uint32_t, float>
+//       <<<first_round_search_grid_size, first_round_search_block_size,
+//          shared_memory_size, compute_stream>>>(
+//           d_base_data, d_hashtables, d_space_128_xx,
+//           (uint32_t*)d_space_128_yy);
+
+//   init_pr_lists<grid_size, block_size, base_num, match_degree,
+//                 second_round_pruned_edge_num, second_round_reverse_edge_num,
+//                 tomb, dim, true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx);
+
+//   fusion_prune_reverse_kernel_v0<grid_size, block_size, base_num,
+//   second_topk,
+//                                  second_round_pruned_edge_num,
+//                                  second_round_reverse_edge_num, tomb, dim,
+//                                  true, float, uint32_t>
+//       <<<grid_size, block_size, 0, compute_stream>>>(
+//           d_base_data, (uint32_t*)d_space_128_yy,
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx);
+
+//   fusion_merge_sort_prune_kernel<grid_size, block_size, base_num,
+//                                  second_round_pruned_edge_num,
+//                                  second_round_reverse_edge_num, final_degree,
+//                                  tomb, dim, true, float, uint32_t>
+//       <<<projection_grid_size, projection_block_size, 0, compute_stream>>>(
+//           d_base_data,
+//           (pr_neighbor_list<uint32_t, second_round_reverse_edge_num,
+//                             second_round_pruned_edge_num>*)d_space_128_xx,
+//           (uint32_t*)d_space_128_yy);
+
+//   // 第二阶段完成，准备数据传输
+//   cudaEvent_t compute_done;
+//   cudaEventCreate(&compute_done);
+//   cudaEventRecord(compute_done, compute_stream);
+
+//   // 确保数据拷贝前计算已完成
+//   cudaStreamWaitEvent(copy_stream, compute_done, 0);
+
+//   // 5. 异步拷贝最终结果给CPU使用
+//   cudaMemcpyAsync(h_second_round_search_merge.data(),
+//   (uint32_t*)d_space_128_yy,
+//                   base_num * final_degree * sizeof(uint32_t),
+//                   cudaMemcpyDeviceToHost, copy_stream);
+
+//   cudaEventDestroy(compute_done);
+
+//   // 标记GPU第二阶段完成 - 这个事件用于CPU同步
+//   cudaEventRecord(gpu_phase2_done, copy_stream);
+
+//   // 6. 等待GPU和CPU任务都完成
+//   // 创建一个单独的标志来跟踪GPU和CPU完成状态
+//   bool gpu_done = false;
+//   bool cpu_done = false;
+//   auto gpu_wait_start = std::chrono::high_resolution_clock::now();
+
+//   // 使用future的wait_for来检查CPU任务是否完成
+//   while (!gpu_done || !cpu_done) {
+//     if (!gpu_done && cudaEventQuery(gpu_phase2_done) == cudaSuccess) {
+//       gpu_done = true;
+//       auto gpu_wait_end = std::chrono::high_resolution_clock::now();
+//       std::chrono::duration<double> gpu_wait_duration =
+//           gpu_wait_end - gpu_wait_start;
+//       SPDLOG_INFO("GPU tasks completed in {:.2f} seconds",
+//                   gpu_wait_duration.count());
+//     }
+
+//     if (!cpu_done && cpu_future.wait_for(std::chrono::microseconds(100)) ==
+//                          std::future_status::ready) {
+//       cpu_done = true;
+//       SPDLOG_INFO("CPU tasks completed");
+//     }
+
+//     // 短暂睡眠以避免忙等待
+//     std::this_thread::sleep_for(std::chrono::milliseconds(1));
+//   }
+
+//   // 停止GPU计时
+//   cudaEventRecord(stop, compute_stream);
+//   cudaEventSynchronize(stop);
+
+//   // 确保CPU线程已经完成
+//   if (cpu_worker.joinable()) {
+//     cpu_worker.join();
+//   }
+
+//   // 7. 执行最终的融合阶段
+//   auto fusion_start = std::chrono::high_resolution_clock::now();
+
+//   final_graph = FusionFinal(base_num, top1_projection_degree, final_degree,
+//   70,
+//                             const_cast<float*>(h_base_data.data()),
+//                             h_projection, fusionNN_graph,
+//                             h_second_round_search_merge, dim,
+//                             cpu_thread_limit);
+
+//   auto fusion_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> fusion_duration = fusion_end - fusion_start;
+//   SPDLOG_INFO("FusionFinal completed in {:.2f} seconds",
+//               fusion_duration.count());
+
+//   // 停止GPU计时
+//   cudaEventRecord(stop, compute_stream);
+//   cudaEventSynchronize(stop);
+
+//   // 计算建图总时间
+//   auto graph_build_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> graph_build_duration =
+//       graph_build_end - graph_build_start;
+//   SPDLOG_INFO("Total graph building time: {:.2f} seconds",
+//               graph_build_duration.count());
+
+//   float gpu_milliseconds = 0;
+//   cudaEventElapsedTime(&gpu_milliseconds, start, stop);
+//   SPDLOG_INFO("GPU kernel execution time: {:.3f} seconds",
+//               gpu_milliseconds / 1000);
+
+//   // 8. 保存最终图（不计入建图时间）
+//   auto save_start = std::chrono::high_resolution_clock::now();
+
+//   SaveGraph(
+//       final_graph,
+//       "/home/shiwen/project/GGidxbuild/GPU-data/laion-1M/saved_graph_match_10",
+//       ep, base_num);
+
+//   auto save_end = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> save_duration = save_end - save_start;
+//   SPDLOG_INFO("Graph saving completed in {:.2f} seconds",
+//               save_duration.count());
+
+//   statDegree(base_num, final_graph);
+//   statDegree(base_num, top1_projection_degree, h_projection);
+//   statDegree(base_num, final_degree, h_second_round_search_merge);
+
+//   // 清理资源
+//   cudaStreamDestroy(compute_stream);
+//   cudaStreamDestroy(copy_stream);
+//   cudaEventDestroy(data_ready);
+//   cudaEventDestroy(gpu_phase1_done);
+//   cudaEventDestroy(gpu_phase2_done);
+//   cudaEventDestroy(start);
+//   cudaEventDestroy(stop);
+
+//   cudaFree(d_base_data);
+//   cudaFree(d_space_128_xx);
+//   cudaFree(d_space_128_yy);
+//   cudaFree(d_top1_projection);
+//   cudaFree(d_hashtables);
+
+//   auto test_end_time = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> test_duration = test_end_time -
+//   test_start_time; SPDLOG_INFO("Total test execution time: {:.2f} seconds",
+//               test_duration.count());
+//   SPDLOG_INFO("Pure graph construction time: {:.2f} seconds",
+//               graph_build_duration.count());
+// }
+
+TEST(GpuConstructionTime, TestEnd2EndCPUGPU_Webvid_2dot5M_512) {
   auto test_start_time = std::chrono::high_resolution_clock::now();
 
   cudaDeviceReset();
@@ -651,8 +1672,8 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   // 配置参数
   constexpr uint32_t gt_degree = 128;
   constexpr uint32_t match_degree = 128;
-  constexpr uint32_t base_num = 10000000;
-  constexpr uint32_t dim = 200;
+  constexpr uint32_t base_num = 2505000;
+  constexpr uint32_t dim = 512;
   constexpr uint32_t tomb = 0XFFFFFFFF;
   constexpr uint32_t reverse_edge_num = 111;
   constexpr uint32_t pruned_edge_num = 15;
@@ -662,10 +1683,10 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   uint32_t ep = 0;  // ep变量
 
   // search相关参数
-  constexpr uint32_t query_num = 10000000;
+  constexpr uint32_t query_num = base_num;
 
   constexpr uint32_t first_round_search_grid_size = 144;
-  constexpr uint32_t first_round_search_block_size = 512 + 256;
+  constexpr uint32_t first_round_search_block_size = 512;
   constexpr uint32_t Km = 32;
   constexpr uint32_t Kp = 2;
   constexpr uint32_t Kd = 16;
@@ -686,10 +1707,10 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t second_round_pruned_edge_num = 55;
   constexpr uint32_t second_round_reverse_edge_num = 71;
 
-  constexpr uint32_t second_search_query_num = 10000000;
+  constexpr uint32_t second_search_query_num = base_num;
 
   constexpr uint32_t second_round_search_grid_size = 144;
-  constexpr uint32_t second_round_search_block_size = 512 + 256;
+  constexpr uint32_t second_round_search_block_size = 512;
   constexpr uint32_t second_Km = 32;
   constexpr uint32_t second_Kp = 2;
   constexpr uint32_t second_Kd = 16;
@@ -707,8 +1728,10 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t final_degree = 55;
 
   auto basedata_file_name =
-      "/home/shiwen/project/GGidxbuild/data/10M_200/vector.fbin";
-  auto gt_file = "/home/shiwen/project/GGidxbuild/data/gt.train.10M.128.gpu";
+      "/home/shiwen/project/GGidxbuild/GPU-data/webvid-2.5M/base.2.5M_512.fbin";
+  auto gt_file =
+      "/home/shiwen/project/GGidxbuild/GPU-data/webvid-2.5M/"
+      "gt.train.2.5M_128.ibin";
 
   // CPU线程数限制
   int max_threads = omp_get_max_threads();
@@ -717,7 +1740,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   // 读取数据
   auto data_load_start = std::chrono::high_resolution_clock::now();
 
-  auto h_gt_data = std::vector<uint32_t>(base_num * gt_degree);
+  auto h_gt_data = std::vector<uint32_t>(2500000 * gt_degree);
   auto h_base_data = std::vector<float>(base_num * dim);
 
   read_vec_from_file(h_gt_data, gt_file);
@@ -790,7 +1813,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
                   copy_stream);
 
   cudaMemcpyAsync(d_space_128_xx, h_gt_data.data(),
-                  base_num * gt_degree * sizeof(uint32_t),
+                  2500000 * gt_degree * sizeof(uint32_t),
                   cudaMemcpyHostToDevice, copy_stream);
 
   auto h_init_match = std::vector<uint32_t>(base_num * match_degree, tomb);
@@ -809,7 +1832,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   constexpr uint32_t match_grid_size = 144;
   constexpr uint32_t match_block_size = 512;
 
-  match_top1_kernel_v0<match_grid_size, match_block_size, base_num, gt_degree,
+  match_top1_kernel_v0<match_grid_size, match_block_size, 2500000, gt_degree,
                        match_degree, 127, tomb, float, uint32_t>
       <<<match_grid_size, match_block_size, 0, compute_stream>>>(
           d_space_128_xx, d_space_128_yy);
@@ -869,52 +1892,62 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
     auto match_start = std::chrono::high_resolution_clock::now();
     // 执行MatchNN计算
     std::vector<std::vector<uint32_t>> topnn_projection_graph =
-        MatchNN(base_num, query_num, match_degree, gt_degree, 40,
+        MatchNN(base_num, 2500000, match_degree, gt_degree, 40,
                 const_cast<uint32_t*>(h_gt_data.data()), ep,
                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
 
     std::vector<std::vector<std::vector<uint32_t>>> supply_graphs;
     std::vector<std::vector<uint32_t>> top2_projection_graph =
-        MatchSup(base_num, query_num, 2, gt_degree, 40,
+        MatchSup(base_num, 2500000, 2, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
     std::vector<std::vector<uint32_t>> top3_projection_graph =
-        MatchSup(base_num, query_num, 3, gt_degree, 40,
+        MatchSup(base_num, 2500000, 3, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top4_projection_graph =
+        MatchSup(base_num, 2500000, 4, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
     std::vector<std::vector<uint32_t>> top5_projection_graph =
-        MatchSup(base_num, query_num, 5, gt_degree, 40,
+        MatchSup(base_num, 2500000, 5, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top6_projection_graph =
+        MatchSup(base_num, 2500000, 6, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
     std::vector<std::vector<uint32_t>> top7_projection_graph =
-        MatchSup(base_num, query_num, 7, gt_degree, 40,
+        MatchSup(base_num, 2500000, 7, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top8_projection_graph =
+        MatchSup(base_num, 2500000, 8, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
     std::vector<std::vector<uint32_t>> top9_projection_graph =
-        MatchSup(base_num, query_num, 9, gt_degree, 40,
+        MatchSup(base_num, 2500000, 9, gt_degree, 40,
+                 const_cast<uint32_t*>(h_gt_data.data()),
+                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
+    std::vector<std::vector<uint32_t>> top10_projection_graph =
+        MatchSup(base_num, 2500000, 10, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
     std::vector<std::vector<uint32_t>> top11_projection_graph =
-        MatchSup(base_num, query_num, 11, gt_degree, 40,
-                 const_cast<uint32_t*>(h_gt_data.data()),
-                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
-    std::vector<std::vector<uint32_t>> top13_projection_graph =
-        MatchSup(base_num, query_num, 13, gt_degree, 40,
-                 const_cast<uint32_t*>(h_gt_data.data()),
-                 const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
-    std::vector<std::vector<uint32_t>> top17_projection_graph =
-        MatchSup(base_num, query_num, 17, gt_degree, 40,
+        MatchSup(base_num, 2500000, 11, gt_degree, 40,
                  const_cast<uint32_t*>(h_gt_data.data()),
                  const_cast<float*>(h_base_data.data()), dim, cpu_thread_limit);
 
     supply_graphs.push_back(top2_projection_graph);
     supply_graphs.push_back(top3_projection_graph);
+    supply_graphs.push_back(top4_projection_graph);
     supply_graphs.push_back(top5_projection_graph);
-    supply_graphs.push_back(top7_projection_graph);
-    supply_graphs.push_back(top9_projection_graph);
-    supply_graphs.push_back(top11_projection_graph);
-    supply_graphs.push_back(top13_projection_graph);
-    supply_graphs.push_back(top17_projection_graph);
+    supply_graphs.push_back(top6_projection_graph);
+    // supply_graphs.push_back(top7_projection_graph);
+    // supply_graphs.push_back(top8_projection_graph);
+    // supply_graphs.push_back(top9_projection_graph);
+    // supply_graphs.push_back(top10_projection_graph);
+    // supply_graphs.push_back(top11_projection_graph);
 
     fusionNN_graph =
         FusionNN(base_num, 40, const_cast<float*>(h_base_data.data()),
@@ -1082,8 +2115,9 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU) {
   auto save_start = std::chrono::high_resolution_clock::now();
 
   SaveGraph(final_graph,
-            "/home/yuxiang/Alaya/GGidxbuild/data/final_test_gpu_graph", ep,
-            base_num);
+            "/home/shiwen/project/GGidxbuild/GPU-data/webvid-2.5M/"
+            "saved_graph_match_5",
+            ep, base_num);
 
   auto save_end = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double> save_duration = save_end - save_start;
