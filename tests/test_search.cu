@@ -1409,25 +1409,6 @@ TEST(TestSearch, Gpulink_process_v0_store_base_data_block_512) {
   cudaFree(d_hashtables);
 }
 
-template <uint32_t num>
-void convert_array_avx512(float const* src, uint16_t* dst) {
-  constexpr size_t simd_width = 16;
-  static_assert(num % 16 == 0);
-  size_t i = 0;
-  for (; i + simd_width <= num; i += simd_width) {
-    __m512 f32_vec = _mm512_loadu_ps(src + i);
-    __m512i u32_vec = _mm512_castps_si512(f32_vec);
-    __m512i round_offset = _mm512_set1_epi32(0x7FFF);
-    __m512i high_bit =
-        _mm512_and_si512(_mm512_srli_epi32(u32_vec, 16), _mm512_set1_epi32(1));
-    round_offset = _mm512_add_epi32(round_offset, high_bit);
-    u32_vec = _mm512_add_epi32(u32_vec, round_offset);
-    __m512i shifted = _mm512_srli_epi32(u32_vec, 16);
-    __m256i bf16_packed = _mm512_cvtusepi32_epi16(shifted);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), bf16_packed);
-  }
-}
-
 TEST(TestSearch, Gpulink_process_v0_store_base_data_block_768) {
   cudaDeviceSynchronize();
 
@@ -1582,30 +1563,6 @@ TEST(TestSearch, Gpulink_process_v0_store_base_data_block_768) {
   cudaFree(d_base_data);
   cudaFree(d_result);
   cudaFree(d_hashtables);
-}
-
-void float32_to_bf16_avx512(float const* src, uint16_t* dst, size_t n) {
-  constexpr size_t simd_width = 16;  // AVX-512 每次处理 16 个 float32
-
-  size_t i = 0;
-  for (; i + simd_width <= n; i += simd_width) {
-    __m512 f32_vec = _mm512_loadu_ps(src + i);
-    __m512i u32_vec = _mm512_castps_si512(f32_vec);
-
-    __m512i round_offset = _mm512_set1_epi32(0x7FFF);
-    __m512i high_bit =
-        _mm512_and_si512(_mm512_srli_epi32(u32_vec, 16), _mm512_set1_epi32(1));
-    round_offset = _mm512_add_epi32(round_offset, high_bit);
-
-    u32_vec = _mm512_add_epi32(u32_vec, round_offset);
-    __m512i shifted = _mm512_srli_epi32(u32_vec, 16);
-
-    // 直接压缩为 16-bit 整数
-    __m256i bf16_packed = _mm512_cvtusepi32_epi16(shifted);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(dst + i), bf16_packed);
-  }
-
-  // 处理剩余元素...
 }
 
 TEST(TestSearch, Gpulink_process_v0_xxx_768) {
