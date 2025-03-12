@@ -4,4 +4,9 @@ build/
 data/
 TODO
 GPU-data/
+<<<<<<< HEAD
 plot/
+=======
+logs/
+*.sh
+>>>>>>> 455af65 (update final version)
