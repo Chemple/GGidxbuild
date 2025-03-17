@@ -227,87 +227,87 @@ std::vector<std::vector<uint32_t>> MatchNN(
   std::vector<std::atomic<uint32_t>> degrees(num_base);
   std::vector<bool> is_full(num_base);
 
-  auto before_parallel = std::chrono::high_resolution_clock::now();
+//   auto before_parallel = std::chrono::high_resolution_clock::now();
 
-#pragma omp parallel for schedule(dynamic, 200)
-  for (uint32_t it_nq = 0; it_nq < num_query; ++it_nq) {
-    uint32_t cur_main_id = match[it_nq];
-    if (cur_main_id >= num_base) {
-      continue;
-    }
-    std::set<uint32_t> vis;
-    std::vector<SimpleNeighbor> full_set;
-    vis.insert(cur_main_id);
-    for (uint32_t j = 0; j < N_ctr; j++) {
-      uint32_t base_id = query_knn[it_nq * N_ctr + j];
-      if (base_id >= num_base) break;
-      if (vis.find(base_id) != vis.end()) continue;
-      vis.insert(base_id);
-      float distance = compare(data + dimension * base_id,
-                               data + dimension * cur_main_id, dimension);
-      full_set.emplace_back(SimpleNeighbor(base_id, distance));
-    }
-    std::sort(full_set.begin(), full_set.end());
-    std::vector<uint32_t> pruned_list;
-    RNGPrune(M_nn, full_set, cur_main_id, pruned_list, data, false, num_base,
-             dimension);
-    for (uint32_t des_node : pruned_list) {
-      if (is_full[des_node]) continue;
-      uint32_t cur_degree =
-          degrees[des_node].fetch_add(1, std::memory_order_relaxed);
-      if (cur_degree < MAX_DEGREE) {
-        tmp_graph[des_node][cur_degree] = cur_main_id;
-      } else if (cur_degree == MAX_DEGREE) {
-        is_full[des_node] = true;
-      }
-    }
-    match_graph[cur_main_id] = pruned_list;
-  }
+// #pragma omp parallel for schedule(dynamic, 200)
+//   for (uint32_t it_nq = 0; it_nq < num_query; ++it_nq) {
+//     uint32_t cur_main_id = match[it_nq];
+//     if (cur_main_id >= num_base) {
+//       continue;
+//     }
+//     std::set<uint32_t> vis;
+//     std::vector<SimpleNeighbor> full_set;
+//     vis.insert(cur_main_id);
+//     for (uint32_t j = 0; j < N_ctr; j++) {
+//       uint32_t base_id = query_knn[it_nq * N_ctr + j];
+//       if (base_id >= num_base) break;
+//       if (vis.find(base_id) != vis.end()) continue;
+//       vis.insert(base_id);
+//       float distance = compare(data + dimension * base_id,
+//                                data + dimension * cur_main_id, dimension);
+//       full_set.emplace_back(SimpleNeighbor(base_id, distance));
+//     }
+//     std::sort(full_set.begin(), full_set.end());
+//     std::vector<uint32_t> pruned_list;
+//     RNGPrune(M_nn, full_set, cur_main_id, pruned_list, data, false, num_base,
+//              dimension);
+//     for (uint32_t des_node : pruned_list) {
+//       if (is_full[des_node]) continue;
+//       uint32_t cur_degree =
+//           degrees[des_node].fetch_add(1, std::memory_order_relaxed);
+//       if (cur_degree < MAX_DEGREE) {
+//         tmp_graph[des_node][cur_degree] = cur_main_id;
+//       } else if (cur_degree == MAX_DEGREE) {
+//         is_full[des_node] = true;
+//       }
+//     }
+//     match_graph[cur_main_id] = pruned_list;
+//   }
 
-  auto after_parallel = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> parallel_duration =
-      after_parallel - before_parallel;
-  SPDLOG_INFO("MatchNN: Initial graph building completed in {:.2f} seconds",
-              parallel_duration.count());
+//   auto after_parallel = std::chrono::high_resolution_clock::now();
+//   std::chrono::duration<double> parallel_duration =
+//       after_parallel - before_parallel;
+//   SPDLOG_INFO("MatchNN: Initial graph building completed in {:.2f} seconds",
+//               parallel_duration.count());
 
-  auto before_final_prune = std::chrono::high_resolution_clock::now();
+//   auto before_final_prune = std::chrono::high_resolution_clock::now();
 
-#pragma omp parallel for schedule(dynamic, 200)
-  for (uint32_t it_nb = 0; it_nb < num_base; ++it_nb) {
-    std::vector<uint32_t> const& vec1 = match_graph[it_nb];
-    std::vector<uint32_t> const& vec2 = tmp_graph[it_nb];
+// #pragma omp parallel for schedule(dynamic, 200)
+//   for (uint32_t it_nb = 0; it_nb < num_base; ++it_nb) {
+//     std::vector<uint32_t> const& vec1 = match_graph[it_nb];
+//     std::vector<uint32_t> const& vec2 = tmp_graph[it_nb];
 
-    uint32_t actual_size = degrees[it_nb].load(std::memory_order_relaxed);
-    actual_size = std::min(actual_size, MAX_DEGREE);
-    std::unordered_set<uint32_t> mergedSet;
-    mergedSet.reserve(vec1.size() + actual_size);
-    mergedSet.insert(vec1.begin(), vec1.end());
-    mergedSet.insert(vec2.begin(), vec2.begin() + actual_size);
+//     uint32_t actual_size = degrees[it_nb].load(std::memory_order_relaxed);
+//     actual_size = std::min(actual_size, MAX_DEGREE);
+//     std::unordered_set<uint32_t> mergedSet;
+//     mergedSet.reserve(vec1.size() + actual_size);
+//     mergedSet.insert(vec1.begin(), vec1.end());
+//     mergedSet.insert(vec2.begin(), vec2.begin() + actual_size);
 
-    match_graph[it_nb] =
-        std::vector<uint32_t>(mergedSet.begin(), mergedSet.end());
-    if (match_graph[it_nb].size() > M_nn) {
-      std::vector<SimpleNeighbor> full_set;
-      for (uint32_t& base_id : match_graph[it_nb]) {
-        float distance = compare(data + dimension * base_id,
-                                 data + dimension * it_nb, dimension);
+//     match_graph[it_nb] =
+//         std::vector<uint32_t>(mergedSet.begin(), mergedSet.end());
+//     if (match_graph[it_nb].size() > M_nn) {
+//       std::vector<SimpleNeighbor> full_set;
+//       for (uint32_t& base_id : match_graph[it_nb]) {
+//         float distance = compare(data + dimension * base_id,
+//                                  data + dimension * it_nb, dimension);
 
-        full_set.emplace_back(SimpleNeighbor(base_id, distance));
-      }
-      std::sort(full_set.begin(), full_set.end());
-      std::vector<uint32_t> pruned_list;
-      RNGPrune(M_nn, full_set, it_nb, pruned_list, data, true, num_base,
-               dimension);
-      match_graph[it_nb] = std::move(pruned_list);
-    }
-  }
+//         full_set.emplace_back(SimpleNeighbor(base_id, distance));
+//       }
+//       std::sort(full_set.begin(), full_set.end());
+//       std::vector<uint32_t> pruned_list;
+//       RNGPrune(M_nn, full_set, it_nb, pruned_list, data, true, num_base,
+//                dimension);
+//       match_graph[it_nb] = std::move(pruned_list);
+//     }
+//   }
+
+//   std::chrono::duration<double> final_duration = end_time - before_final_prune;
+//   SPDLOG_INFO("MatchNN: Final pruning completed in {:.2f} seconds",
+//               final_duration.count());
 
   auto end_time = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double> final_duration = end_time - before_final_prune;
   std::chrono::duration<double> total_duration = end_time - start_time;
-
-  SPDLOG_INFO("MatchNN: Final pruning completed in {:.2f} seconds",
-              final_duration.count());
   SPDLOG_INFO("MatchNN: Total execution time: {:.2f} seconds",
               total_duration.count());
 
@@ -924,7 +924,7 @@ TEST(GpuConstructionTime, TestEnd2EndCPUGPU_Laion_1M_512) {
         match_rounds);
 
     // 添加动态轮数的补充图
-    for (int i = 2; i < match_rounds + 2; i++) {
+    for (int i = 1; i < match_rounds + 1; i++) {
       auto round_start = std::chrono::high_resolution_clock::now();
       std::vector<std::vector<uint32_t>> proj_graph = MatchSup(
           base_num, query_num, i, gt_degree, 40,
