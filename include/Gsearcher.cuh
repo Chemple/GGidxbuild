@@ -708,7 +708,7 @@ template <uint32_t grid_size, uint32_t block_size, uint32_t base_num,
           uint32_t topk, uint32_t tomb = 0XFFFFFFFF, uint32_t hash_table_size,
           uint32_t reset_iter, typename id_type = uint32_t,
           typename data_type = float>
-__global__ void __launch_bounds__(block_size)
+__global__ void __launch_bounds__(block_size, 2)
     link_process_v0(data_type* base_data,
                     HashTable<uint32_t, hash_table_size>* hash_tables,
                     id_type* graph,
